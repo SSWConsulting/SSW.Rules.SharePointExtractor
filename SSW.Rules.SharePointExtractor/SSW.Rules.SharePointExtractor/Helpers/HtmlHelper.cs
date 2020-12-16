@@ -103,6 +103,22 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             return result;
         }
 
+        public static string ReplaceHtmlWithCodeBlock(string html, string oldHtmlTag, string oldClassName, string type)
+        {
+            string result = html;
+            var nodes = HtmlHelper.GetNodesWithTagAndClassName(html, oldHtmlTag, oldClassName);
+
+            foreach (var node in nodes)
+            {
+                if (!string.IsNullOrEmpty(node.OuterHtml))
+                {
+                    result = result.Replace(node.OuterHtml,
+                        CodeBlocks.Create(node.InnerHtml.Trim(' '), type));
+                }
+            }
+            return result;
+        }
+
         public static HtmlNodeCollection GetNodesWithTagAndAttribute(string content, string htmlTag, string attr, string attrValue)
         {
             var doc = new HtmlDocument();
