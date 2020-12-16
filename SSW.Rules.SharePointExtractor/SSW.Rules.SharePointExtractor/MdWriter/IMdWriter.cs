@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using SSW.Rules.SharePointExtractor.Converter;
 using SSW.Rules.SharePointExtractor.Helpers;
 using SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels;
@@ -35,6 +36,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         public bool ProcessHistory { get; set; }
         public bool WriteRules { get; set; }
         public bool WriteCategories { get; set; }
+        public bool WriteJsonFileHistory { get; set; }
         public string CategoriesFolderFull => Path.Combine(TargetRepository, CategoriesFolder);
         public string RulesFolderFull => Path.Combine(TargetRepository, RulesFolder);
         public string AssetsFolderFull => Path.Combine(TargetRepository, AssetsFolder);
@@ -65,7 +67,8 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             WriteCategories = true,
             FetchImages = true,
             WriteRules = true,
-            ProcessHistory = true
+            ProcessHistory = true,
+            WriteJsonFileHistory = true
         };
 
 
@@ -96,6 +99,23 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                     WriteRules(data);
                 }
 
+                if (_config.WriteJsonFileHistory)
+                {
+                    List<HistoryInfos> list = new List<HistoryInfos>();
+                    list = WriteRulesJsonFileHistory(data);
+                    list = list.Concat(WriteCategoriesJsonFileHistory(data)).ToList();
+                    string json = JsonConvert.SerializeObject(list);
+                    //write string to file
+                    string fileName = "history.json";
+                    System.IO.File.WriteAllText(Path.Combine(_config.TargetRepository, "history.json"), json);
+                    //commit file
+                    GitCommit(
+                        _config.TargetRepository,
+                        $"Extracted from Sharepoint to Git",
+                        new LibGit2Sharp.Signature("SSW.Rules.SharePointExtractor", "SSW.Rules.SharePointExtractor@ssw.com.au", DateTime.UtcNow),
+                        new LibGit2Sharp.Signature("SSW.Rules.SharePointExtractor", "SSW.Rules.SharePointExtractor@ssw.com.au", DateTime.UtcNow),
+                       fileName);
+                }
             }
             catch (Exception ex)
             {
@@ -108,6 +128,68 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
 
         }
 
+        private List<HistoryInfos> WriteRulesJsonFileHistory(SpRulesDataSet data)
+        {
+            _log.LogInformation($"Writing History Json File");
+
+
+            List<HistoryInfos> infos = new List<HistoryInfos>();
+            foreach (var rule in data.Rules)
+            {
+                var rulePaths = new RulePaths(_config, rule);
+                var creationData = rule.Versions
+                 .Where(v => !string.IsNullOrWhiteSpace(v.IntroText) || !string.IsNullOrWhiteSpace(v.Content)) // filter out where we have no content
+                 .OrderBy(v => v.ModifiedUtc).FirstOrDefault();
+
+                var lastModifiedData = rule.Versions
+                .Where(v => !string.IsNullOrWhiteSpace(v.IntroText) || !string.IsNullOrWhiteSpace(v.Content)) // filter out where we have no content
+                .OrderByDescending(v => v.ModifiedUtc).FirstOrDefault();
+                var info = new HistoryInfos
+                {
+                    file = rulePaths.RuleFileRelative.Replace("\\", "/"),
+                    created = creationData.ModifiedUtc,
+                    createdBy = creationData.ModifiedByDisplayName,
+                    createdByEmail = creationData.ModifiedByEmail,
+                    lastUpdated = lastModifiedData.ModifiedUtc,
+                    lastUpdatedBy = lastModifiedData.ModifiedByDisplayName,
+                    lastUpdatedByEmail = lastModifiedData.ModifiedByEmail
+                };
+                infos.Add(info);
+            }
+            return infos;
+
+        }
+
+        private List<HistoryInfos> WriteCategoriesJsonFileHistory(SpRulesDataSet data)
+        {
+            _log.LogInformation($"Writing History Json File");
+
+            List<HistoryInfos> infos = new List<HistoryInfos>();
+            foreach (var cat in data.Categories)
+            {
+                if (cat.Versions.Count == 0)
+                    continue;
+                var catPath = new CategoryPaths(_config, cat);
+                var creationData = cat.Versions
+                 .OrderBy(v => v.ModifiedUtc).FirstOrDefault();
+
+                var lastModifiedData = cat.Versions
+                .OrderByDescending(v => v.ModifiedUtc).FirstOrDefault();
+                var info = new HistoryInfos
+                {
+                    file = catPath.CategoryFileRelative.Replace("\\", "/"),
+                    created = creationData.ModifiedUtc,
+                    createdBy = creationData.ModifiedByDisplayName,
+                    createdByEmail = creationData.ModifiedByEmail,
+                    lastUpdated = lastModifiedData.ModifiedUtc,
+                    lastUpdatedBy = lastModifiedData.ModifiedByName,
+                    lastUpdatedByEmail = lastModifiedData.ModifiedByDisplayName
+                };
+                infos.Add(info);
+            }
+
+            return infos;
+        }
 
         private void WriteRules(SpRulesDataSet data)
         {
@@ -138,15 +220,15 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
 {cat.IntroText}
 {cat.Content}
 ";
-                
 
-        string markdown =
-                    $@"---
+
+                string markdown =
+                            $@"---
 {YamlSerializer.Serialize(new CategoryMdModel(cat))}
 ---
 { MarkdownConverter.Convert(html)}
 
-"; 
+";
                 _log.LogInformation($"writing {catPaths.CategoryFileFull}");
                 using (var sw = new StreamWriter(catPaths.CategoryFileFull, false))
                 {
@@ -384,7 +466,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                     FetchImages(category.ImageUrls, new CategoryPaths(_config, category).CategoryFolderFull);
 
                 var imgsIntro = HtmlHelper.GetImageUrls(category.IntroText);
-                if (imgsIntro.Count>0)
+                if (imgsIntro.Count > 0)
                     FetchImages(imgsIntro, new CategoryPaths(_config, category).CategoryFolderFull);
 
                 var imgsContent = HtmlHelper.GetImageUrls(category.Content);
@@ -417,7 +499,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             var webClient = new WebClient();
             foreach (var url in imageUrls)
             {
-                var imgUrl = WebUtility.HtmlDecode(url).Replace("%5c","/");
+                var imgUrl = WebUtility.HtmlDecode(url).Replace("%5c", "/");
                 var outputPath = "";
                 if (imgUrl.StartsWith("/"))
                 {
@@ -429,7 +511,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                 else
                 {
                     var filename = ImageFilenameFromUrl(imgUrl);
-                    outputPath = Path.Combine( _config.AssetsFolderFull, filename);
+                    outputPath = Path.Combine(_config.AssetsFolderFull, filename);
                 }
 
                 if (!File.Exists(outputPath))
@@ -439,7 +521,8 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                         _log.LogInformation("Getting {Url} to {FileName}", imgUrl, outputPath);
                         webClient.DownloadFile(imgUrl, outputPath);
 
-                        if (outputPath.EndsWith(".bmp")){
+                        if (outputPath.EndsWith(".bmp"))
+                        {
                             Bitmap bmp1 = new Bitmap(outputPath);
                             bmp1.Save(outputPath.Replace(".bmp", ".png"), ImageFormat.Png);
                         }
@@ -452,7 +535,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             }
         }
 
-        
+
         private void ProcessImageUrls(SpRulesDataSet data)
         {
             foreach (var rule in data.Rules)
@@ -473,7 +556,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                 var imgsContent = HtmlHelper.GetImageUrls(category.Content);
                 if (imgsContent.Count > 0)
                     images.UnionWith(imgsContent);
-                UpdateImageUrlsInCategory(category,images);
+                UpdateImageUrlsInCategory(category, images);
             }
         }
 
@@ -520,7 +603,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
 
         private void UpdateImageUrlsInCategory(Category category, HashSet<string> imageUrls)
         {
-            if(!imageUrls.Any()) return;
+            if (!imageUrls.Any()) return;
             foreach (var url in imageUrls)
             {
                 var filename = GetImageFilename(url);
@@ -609,7 +692,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
 
 
     public static class RuleExtensions
-    {     
+    {
         /// <summary>
         /// clean up a string to use as a file name. 
         /// </summary>
@@ -661,12 +744,12 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
 
 
             string html = $@"
-<span class='intro'> {introText} </span>
-
+{introText}
+<br><excerpt class='endintro'></excerpt><br>
 {content}
 
-";         
-            if(skipHtmlMarkdownConversion)
+";
+            if (skipHtmlMarkdownConversion)
             {
                 //We don't want to convert all the history from HTML to Markdown so we skip it here
                 return html;
@@ -676,7 +759,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             return result;
         }
 
-        
+
     }
 
 

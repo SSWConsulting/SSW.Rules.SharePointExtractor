@@ -47,6 +47,96 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             greyboxNodes = doc.DocumentNode.SelectNodes("//font");
             result.UnionWith(FindClassName("greybox", greyboxNodes));
 
+            greyboxNodes = doc.DocumentNode.SelectNodes("//dt");
+            result.UnionWith(FindClassName("greybox", greyboxNodes));
+
+            return result;
+        }
+
+        public static string ReplaceHtmlWithFullTagAndAttribute(string html, string oldHtmlTag, string attr, string attrValue, string newHtmlTag)
+        {
+            string result = html;
+            var nodes = HtmlHelper.GetNodesWithTagAndAttribute(html, oldHtmlTag, attr, attrValue);
+
+            foreach (var node in nodes)
+            {
+                if (!string.IsNullOrEmpty(node.OuterHtml))
+                {
+                    result = result.Replace(node.OuterHtml,
+                        "<" + newHtmlTag + ">" + node.InnerHtml.Trim(' ') + "</" + newHtmlTag + ">");
+                }
+            }
+
+            return result;
+        }
+
+        public static string ReplaceHtmlWithTagAndClassName(string html, string oldHtmlTag, string oldClassName, string newHtmlTag)
+        {
+            string result = html;
+            var nodes = HtmlHelper.GetNodesWithTagAndClassName(html, oldHtmlTag, oldClassName);
+
+            foreach (var node in nodes)
+            {
+                if (!string.IsNullOrEmpty(node.OuterHtml))
+                {
+                    result = result.Replace(node.OuterHtml,
+                        "<" + newHtmlTag + ">" + node.InnerHtml.Trim(' ') + "</" + newHtmlTag + ">");
+                }
+            }
+
+            return result;
+        }
+
+        public static string ReplaceHtmlWithFencedBlock(string html, string oldHtmlTag, string oldClassName, string className)
+        {
+            string result = html;
+            var nodes = HtmlHelper.GetNodesWithTagAndClassName(html, oldHtmlTag, oldClassName);
+
+            foreach (var node in nodes)
+            {
+                if (!string.IsNullOrEmpty(node.OuterHtml))
+                {
+                    result = result.Replace(node.OuterHtml,
+                        FencedBlocks.Create(node.InnerHtml.Trim(' '), className));
+                }
+            }
+            return result;
+        }
+
+        public static HtmlNodeCollection GetNodesWithTagAndAttribute(string content, string htmlTag, string attr, string attrValue)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(content);
+            if (doc.DocumentNode == null) return null;
+            if (content == null) return null;
+
+            var htmlNodes = doc.DocumentNode.SelectNodes("//" + htmlTag);
+
+            var result = new HtmlNodeCollection(doc.DocumentNode);
+            if (htmlNodes == null) return result;
+
+            foreach (var node in htmlNodes)
+            {
+                var attribute = node.Attributes[attr]?.Value;
+                if (attribute?.IndexOf(attrValue, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    result.Add(node);
+                }
+            }
+
+            return result;
+        }
+
+        public static HtmlNodeCollection GetNodesWithTagAndClassName(string content, string htmlTag, string className)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(content);
+            if (doc.DocumentNode == null) return null;
+            if (content == null) return null;
+
+            var htmlNodes = doc.DocumentNode.SelectNodes("//" + htmlTag);
+            var result = FindClassNameNodes(className, htmlNodes);
+
             return result;
         }
 
@@ -65,5 +155,23 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             }
             return result;
         }
+
+        private static HtmlNodeCollection FindClassNameNodes(string classname, HtmlNodeCollection nodes)
+        {
+            var doc = new HtmlDocument();
+            var result = new HtmlNodeCollection(doc.DocumentNode);
+
+            if (nodes == null) return result;
+
+            foreach (var node in nodes)
+            {
+                var className = node.Attributes["class"]?.Value;
+                if (className?.IndexOf(classname, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    result.Add(node);
+                }
+            }
+            return result;
+        }        
     }
 }

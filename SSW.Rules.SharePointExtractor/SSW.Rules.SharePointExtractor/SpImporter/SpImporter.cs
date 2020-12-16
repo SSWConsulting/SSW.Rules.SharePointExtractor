@@ -52,6 +52,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                     CullEmptyCategories(data);
                     ScrapeHomePage(data).GetAwaiter().GetResult();
                     ScrapeCategoryPages(data).GetAwaiter().GetResult();
+                    ScrapeCategoryPages(data, true).GetAwaiter().GetResult();
                 }
                 return data;
             }
@@ -140,7 +141,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 }
 
                 // DEBUG uncomment this for testing with a smaller amount of data
-                // if (count > 300) break;
+                //if (count > 300) break;
             }
         }
 
@@ -200,6 +201,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                         ?.CheckInComment,
                     ModifiedUtc = DateTime.Parse(v.Attribute("Modified")?.Value),
                     ModifiedBy = v.Attribute("Editor")?.Value?.Split(new char[] {','})[2],
+                    ModifiedByFullName = v.Attribute("Editor")?.Value?.Split(new char[] { ',' })[4],
                     Title = fieldHistoryData.ValueOrNull("Title")?.ValueOrNull(v.Attribute("Modified")?.Value),
                     IntroText = fieldHistoryData.ValueOrNull(introTextFieldName)?.ValueOrNull(v.Attribute("Modified")?.Value),
                     Content = fieldHistoryData.ValueOrNull("PublishingPageContent")?.ValueOrNull(v.Attribute("Modified")?.Value),
@@ -275,6 +277,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
 
             var rulePage = new RulePage()
             {
+                ArchivedReason = item["ObsoleteReason"]?.ToString(),
                 Title = item["Title"].ToString().Trim(),
                 Id = Convert.ToInt32(item["ID"]),
                 Content = item["PublishingPageContent"]?.ToString(),
@@ -487,7 +490,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
         /// we screen-scrape every category summary item to get the ordering of rule items within a category
         /// </summary>
         /// <param name="dataSet">data set we're building</param>
-        public async Task ScrapeCategoryPages(SpRulesDataSet dataSet)
+        public async Task ScrapeCategoryPages(SpRulesDataSet dataSet, bool archived = false)
         {
             foreach (var cat in dataSet.Categories)
             {
@@ -509,7 +512,12 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
 
                 _log.LogInformation("Screen scrape of category {CatTitle}", cat.Title);
                 HtmlWeb web = new HtmlWeb();
-                var doc = await web.LoadFromWebAsync(_appSettings.SharePointUrl + cat.Uri.ToString());
+                var uri = cat.Uri.ToString();
+                if (archived)
+                {
+                    uri += "?showarchived=True";
+                }
+                var doc = await web.LoadFromWebAsync(_appSettings.SharePointUrl + uri);
 
                 var ruleNodes = doc.DocumentNode.SelectNodes(
                     ".//*[@id='ctl00_PlaceHolderMain_RuleSummaryUC_SSWRuleSummaryUCDiv']/div/ol/li");

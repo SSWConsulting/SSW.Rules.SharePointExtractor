@@ -13,6 +13,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
         public CategoryMdModel(Category cat)
         {
             Title = cat.Title;
+            Guid = cat.PageGuid ?? cat.TermStoreGuid;
             Uid = cat.Name.ToFileName();
             Index = cat.Rules.Select(r => r.Name.ToFileName()).ToList();
         }
@@ -20,6 +21,9 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
         public String Type => "category";
 
         public string Title { get; }
+
+        public string Guid { get; }
+
         public string Uid { get;  }
 
         public List<string> Index { get; }

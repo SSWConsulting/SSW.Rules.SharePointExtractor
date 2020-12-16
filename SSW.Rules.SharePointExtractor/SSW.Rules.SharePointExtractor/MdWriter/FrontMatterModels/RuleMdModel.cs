@@ -14,14 +14,20 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
         {
             Title = rule.Title;
             Created = rule.CreatedUtc;
+            Guid = rule.Guid;
             Uri = rule.Name.ToFileName();
             Authors = rule.Employees.Select(e => new AuthorMdModel(e)).ToList();
+            ArchivedReason = rule.ArchivedReason;
             Related = rule.Related.ToList();
         }
 
         public string Type => "rule";
 
+        public string ArchivedReason { get; }
+
         public string Title { get; }
+
+        public string Guid { get; }
 
         public string Uri { get; }
 

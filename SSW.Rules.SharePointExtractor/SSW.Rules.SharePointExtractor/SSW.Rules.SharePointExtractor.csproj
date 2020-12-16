@@ -176,9 +176,14 @@
     <Compile Include="Converter\MarkdownConverter.cs" />
     <Compile Include="Converter\PostMarkdownConversion.cs" />
     <Compile Include="Converter\PreMarkdownConversion.cs" />
+    <Compile Include="Helpers\HtmlDescriptionDetails.cs" />
+    <Compile Include="Helpers\HtmlFont.cs" />
+    <Compile Include="Helpers\HtmlDescriptionList.cs" />
+    <Compile Include="Helpers\HtmlSpan.cs" />
     <Compile Include="Helpers\Greybox.cs" />
     <Compile Include="Helpers\HtmlHelper.cs" />
     <Compile Include="Helpers\MarkdownImages.cs" />
+    <Compile Include="Helpers\FencedBlocks.cs" />
     <Compile Include="Helpers\Youtube.cs" />
     <Compile Include="MdWriter\FrontMatterModels\CategoryMdModel.cs" />
     <Compile Include="MdWriter\FrontMatterModels\IndexMdModel.cs" />
@@ -187,6 +192,7 @@
     <Compile Include="MdWriter\IMdWriter.cs" />
     <Compile Include="Models\Category.cs" />
     <Compile Include="Models\Employee.cs" />
+    <Compile Include="Models\HistoryInfos.cs" />
     <Compile Include="Models\IHasContentHistory.cs" />
     <Compile Include="Models\ParentCategory.cs" />
     <Compile Include="Models\RulePage.cs" />

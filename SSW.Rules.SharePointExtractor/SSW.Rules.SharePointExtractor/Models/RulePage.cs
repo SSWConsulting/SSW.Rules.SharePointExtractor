@@ -11,6 +11,8 @@ namespace SSW.Rules.SharePointExtractor.Models
 
         public string Guid { get; set; }
 
+        public string ArchivedReason { get; set; }
+
         public string IntroText { get; set; }
 
         public string Content { get; set; }
@@ -75,6 +77,19 @@ namespace SSW.Rules.SharePointExtractor.Models
             }
         }
 
+        public string ModifiedByFullName
+        {
+            get;set;
+        }
+        public string ModifiedByDisplayName
+        {
+            get
+            {
+                // trim leading #
+                var result = ModifiedByFullName.Substring(1).Replace("www.ssw.com.au","").Trim();
+                return string.IsNullOrEmpty(result) ? "Unknown" : result;
+            }
+        }
     }
     
 
