@@ -13,6 +13,7 @@ using System.Xml.Linq;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Microsoft.SharePoint.Client;
+using Microsoft.SharePoint.Client.Publishing.Navigation;
 using Microsoft.SharePoint.Client.Sharing;
 using Microsoft.SharePoint.Client.Taxonomy;
 using Microsoft.SharePoint.Client.WebParts;
@@ -90,6 +91,20 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
 
         private void LoadPages(SpRulesDataSet dataSet, ClientContext ctx)
         {
+            _log.LogInformation("Loading Navigation Terms...");
+            TaxonomySession taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
+            TermStore termStore = taxonomySession.TermStores.GetByName("Managed Metadata Service");
+            TermGroup termGroup = termStore.Groups.GetByName("Site Collection - rules.ssw.com.au");
+            TermSet termSet = termGroup.TermSets.GetByName("Home Navigation");
+            TermCollection termColl = termSet.Terms;
+            ctx.Load(termColl, t => t.Include(
+                i => i.Name,
+                i => i.LocalCustomProperties));
+            ctx.ExecuteQuery();
+
+            var url = "";
+            termColl[0].LocalCustomProperties.TryGetValue("_Sys_Nav_TargetUrl", out url);
+
             _log.LogInformation("Loading  Pages...");
             var web = ctx.Web;
 
@@ -104,6 +119,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             ListItemCollection items = oList.GetItems(camlQuery);
             ctx.Load(items); 
             ctx.ExecuteQuery();
+
 
 
             int count = 0;
@@ -141,7 +157,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 }
 
                 // DEBUG uncomment this for testing with a smaller amount of data
-                //if (count > 300) break;
+                if (count > 3) break;
             }
         }
 
@@ -288,8 +304,9 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 Guid = item["GUID"].ToString()
             };
 
-            RulePageAuthors(item, dataSet, rulePage);
-            RulePageRelated(item, dataSet, rulePage);
+            //RulePageAuthors(item, dataSet, rulePage);
+            //RulePageRelated(item, dataSet, rulePage);
+            RulePageFriendlyUrls(item, dataSet, rulePage, ctx);
 
             rulePage.ImageUrls.UnionWith(GetImageUrls(rulePage.IntroText));
             rulePage.ImageUrls.UnionWith(GetImageUrls(rulePage.Content));
@@ -420,6 +437,17 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 }
             }
             rulePage.Related = rulePage.Related.Distinct().ToList();
+        }
+
+        /// <summary>
+        /// process friendly urls rules for a rule page
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="dataSet"></param>
+        /// <param name="rulePage"></param>
+        private void RulePageFriendlyUrls(ListItem item, SpRulesDataSet dataSet, RulePage rulePage, ClientContext ctx2)
+        {
+
         }
 
         /// <summary>
