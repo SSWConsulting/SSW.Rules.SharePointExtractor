@@ -17,8 +17,15 @@ stages:
     demands: 
     - Agent.Name -equals $(buildAgentName)
 
-  ## TODO - implement the real work
+
   jobs: 
+  - job: build
+    steps:
+    - task: MSBuild@1
+      inputs:
+        solution: SSW.Rules.SharePointExtractor\SSW.Rules.SharePointExtractor.sln
+
+
   - job: hello_world
     steps:
     - script: echo Hello, world!
