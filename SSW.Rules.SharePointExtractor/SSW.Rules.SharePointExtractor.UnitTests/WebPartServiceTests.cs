@@ -16,11 +16,11 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
     public class WebPartServiceTests
     {
 
-        private readonly ApplicationSettings _appSettings;
+        private readonly SharepointConfig _cfg;
 
         public WebPartServiceTests()
         {
-            _appSettings = ApplicationSettings.LoadConfig();
+            _cfg = Config.BuildApplicationConfig().SharepointConfig;
         }
 
 
@@ -30,7 +30,7 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
         {
 
             var svc = new WebPartPagesWebServiceSoapClient();
-            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.Username, _appSettings.Password, "SSW2000");
+            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_cfg.Username, _cfg.Password, _cfg.Domain);
             
             var xx = svc.GetWebPart2("/Pages/Rules-to-Successful-Projects.aspx", new Guid("abedc3a2-8283-4264-87c4-31201fe8274b"), SpWebPartService.Storage.Shared, SPWebServiceBehavior.Version3);
             xx.Should().NotBeNull();

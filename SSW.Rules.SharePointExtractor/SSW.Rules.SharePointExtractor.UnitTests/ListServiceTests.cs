@@ -15,11 +15,11 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
     public class ListServiceTests
     {
 
-        private readonly ApplicationSettings _appSettings;
+        private readonly ApplicationConfig _appSettings;
 
         public ListServiceTests()
         {
-            _appSettings = ApplicationSettings.LoadConfig();
+            _appSettings = Config.BuildApplicationConfig();
         }
 
 
@@ -29,7 +29,7 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
         {
 
             var svc = new ListsSoapClient();
-            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.Username, _appSettings.Password, "SSW2000");
+            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.SharepointConfig.Username, _appSettings.SharepointConfig.Password, _appSettings.SharepointConfig.Domain);
 
             var xx = svc.GetList("TaxonomyHiddenList");
             xx.Should().NotBeNull();
@@ -44,7 +44,7 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
         {
 
             var svc = new ListsSoapClient();
-            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.Username, _appSettings.Password, "SSW2000");
+            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.SharepointConfig.Username, _appSettings.SharepointConfig.Password, _appSettings.SharepointConfig.Domain);
 
             XElement queryOptions = XElement.Parse(@"<QueryOptions/>");
 
@@ -60,7 +60,7 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
         {
 
             var svc = new ListsSoapClient();
-            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.Username, _appSettings.Password, "SSW2000");
+            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.SharepointConfig.Username, _appSettings.SharepointConfig.Password, _appSettings.SharepointConfig.Domain);
             var xx = svc.GetVersionCollection("Pages", "4", "Version");
             xx.Should().NotBeNull();
 
@@ -72,7 +72,7 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
         {
 
             var svc = new ListsSoapClient();
-            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.Username, _appSettings.Password, "SSW2000");
+            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.SharepointConfig.Username, _appSettings.SharepointConfig.Password, _appSettings.SharepointConfig.Domain);
             var xx = svc.GetVersionCollection("Pages", "4", "PublishingPageContent");
 
             xx.Should().NotBeNull();

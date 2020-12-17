@@ -15,18 +15,18 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
     public class SharePointClientTests
     {
 
-        private readonly ApplicationSettings appSettings;
+        private readonly SharepointConfig _cfg;
 
         public SharePointClientTests()
         {
-            appSettings = ApplicationSettings.LoadConfig();
+            _cfg = Config.BuildApplicationConfig().SharepointConfig;
         }
 
 
         [Fact]
         public void ShouldConnectToSite()
         {
-            using (var ctx = SpImporter.SpImporter.CreateClientContext(appSettings))
+            using (var ctx = SpImporter.SpImporter.CreateClientContext(_cfg))
             {
                 var web = ctx.Web;
                 ctx.Load(web);
@@ -40,7 +40,7 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
         [Fact]
         public void ShouldLoadTaxonomyHiddenList()
         {
-            using (var ctx = SpImporter.SpImporter.CreateClientContext(appSettings))
+            using (var ctx = SpImporter.SpImporter.CreateClientContext(_cfg))
             {
                 var items = SpImporter.SpImporter.GetAllItems(ctx, "TaxonomyHiddenList");
                 items.Should().NotBeNull();
@@ -51,7 +51,7 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
         [Fact]
         public void ShouldGetCategoryContent()
         {
-            using (var ctx = SpImporter.SpImporter.CreateClientContext(appSettings))
+            using (var ctx = SpImporter.SpImporter.CreateClientContext(_cfg))
             {
                 var web = ctx.Web;
 

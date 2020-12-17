@@ -7,10 +7,12 @@ using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SharePoint.Client;
@@ -19,78 +21,60 @@ using Newtonsoft.Json;
 using SSW.Rules.SharePointExtractor.MdWriter;
 using SSW.Rules.SharePointExtractor.Models;
 using SSW.Rules.SharePointExtractor.SpImporter;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NodeTypeResolvers;
 
 namespace SSW.Rules.SharePointExtractor
 {
     public class Program
     {
 
-        /// <summary>
-        /// set to read from a json file instead of slowly importing from sharepoint
-        /// set via command argument ReadFile=xxx
-        /// </summary>
-        public static string ReadFile = null;
+        public static IConfiguration Configuration { get; set; }
 
-        /// <summary>
-        /// set to write sharepoint data to a json file
-        /// set via command argument WriteFile=xxx
-        /// does not make much sense to read and write in the same run!
-        /// </summary>
-        public static string WriteFile = null;
-
+        public static ApplicationConfig ApplicationConfig { get; set; }
+        
 
         public static void Main(string[] args)
         {
-            // TODO - could bring in a full library for cli parameters & help text, but this works well enough for now.
-            var readFileArg = args.FirstOrDefault(a => a.StartsWith("ReadFile="));
-            if (readFileArg != null)
-            {
-                ReadFile = readFileArg.Substring("ReadFile=".Length);
-                Console.Out.WriteLine($"Will read data from {ReadFile}");
-            }
+
+            Configuration = BuildConfig(args);
+            ApplicationConfig = new ApplicationConfig(Configuration);
             
-            var writeFileArg = args.FirstOrDefault(a => a.StartsWith("WriteFile="));
-            if (writeFileArg != null)
-            {
-                WriteFile = writeFileArg.Substring("WriteFile=".Length);
-                Console.Out.WriteLine($"Will write data to {WriteFile}");
-            }
-
-
             try
             {
                 using (var scope = BuildServiceProvider().CreateScope())
                 {
                     var log = scope.ServiceProvider.GetService<ILogger<Program>>();
-                    log.LogInformation("Starting SharePoint Extractor...");
 
-
-                    // Fetch Sharepoint Data 
-                    var importer = scope.ServiceProvider.GetService<ISpImporter>();
-                    var data = importer.Import();
-
-                    // write to file if configured
-                    if (WriteFile != null)
+                    SpRulesDataSet data = null;
+                    
+                    if (ApplicationConfig.SharepointExtractEnabled)
                     {
+                        log.LogInformation("Starting SharePoint Extractor...");
+                        var importer = scope.ServiceProvider.GetService<SpImporter.SpImporter>();
+                        data = importer.Import();
+                        
                         var serialized = JsonConvert.SerializeObject(data,
                             new JsonSerializerSettings()
                                 {PreserveReferencesHandling = PreserveReferencesHandling.Objects});
-                        using (var writer = new StreamWriter(WriteFile))
+                        using (var writer = new StreamWriter(ApplicationConfig.DataFile))
                         {
                             writer.Write(serialized);
                         }
-
                         log.LogInformation("wrote to json file");
                     }
+                    else
+                    {
+                        log.LogInformation("loading previously extracted data from file");
+                        var fileImporter = scope.ServiceProvider.GetService<FileImporter>();
+                        data = fileImporter.Import();
+                    }
 
-
-                    // DEBUG Uncomment to log details of ruleset
-                    //LogRuleSetDetails(log, data);
-
-
-                    // write to markdown
-                    var mdWriter = scope.ServiceProvider.GetService<IMdWriter>();
-                    mdWriter.WriteMarkdown(data);
+                    if (ApplicationConfig.MdWriterEnabled)
+                    {
+                        var mdWriter = scope.ServiceProvider.GetService<IMdWriter>();
+                        mdWriter.WriteMarkdown(data);
+                    }
 
                 }
             }
@@ -125,29 +109,38 @@ namespace SSW.Rules.SharePointExtractor
             }
         }
 
+        public static IConfiguration BuildConfig(string[] args)
+        {
+            return new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", false)
+                .AddJsonFile("appsettings.local.json")
+                .AddEnvironmentVariables()
+                .AddCommandLine(args)
+                .Build();
+        }
 
         public static IServiceProvider BuildServiceProvider()
 
         {
             var services = new ServiceCollection();
-            var appSettings = ApplicationSettings.LoadConfig();
             services.AddLogging(b => b.AddConsole());
 
-            services.AddSingleton<ApplicationSettings>(appSettings);
-
-            // are we importing from sharepoint or loading from a file?
-            if (ReadFile != null)
+            services.AddSingleton<ApplicationConfig>(ApplicationConfig);
+            if (ApplicationConfig.SharepointExtractEnabled)
             {
-                services.AddSingleton<ISpImporter>(new FileImporter(ReadFile));
+                services.AddSingleton(ApplicationConfig.SharepointConfig);
+                services.AddSingleton<SpImporter.SpImporter>();
             }
             else
             {
-                services.AddSingleton<ISpImporter, SpImporter.SpImporter>();
+                services.AddSingleton(new FileImporter(ApplicationConfig.DataFile));
             }
-
-            if (appSettings.MdWriterConfig != null) services.AddSingleton(appSettings.MdWriterConfig);
-            services.AddSingleton<IMdWriter, MdWriter.MdWriter>();
-
+            
+            if (ApplicationConfig.MdWriterEnabled)
+            {
+                services.AddSingleton(ApplicationConfig.MdWriterConfig);
+                services.AddSingleton<IMdWriter, MdWriter.MdWriter>();
+            }
             return services.BuildServiceProvider();
 
         }

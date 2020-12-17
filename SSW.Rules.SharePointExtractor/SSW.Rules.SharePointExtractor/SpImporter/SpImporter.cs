@@ -28,14 +28,14 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
     {
         
         private readonly ILogger<SpImporter> _log;
-        private readonly ApplicationSettings _appSettings;
+        private readonly SharepointConfig _config;
 
 
 
-        public SpImporter(ILogger<SpImporter> log, ApplicationSettings appSettings)
+        public SpImporter(ILogger<SpImporter> log, SharepointConfig config)
         {
             _log = log;
-            _appSettings = appSettings;
+            _config = config;
         }
 
 
@@ -45,7 +45,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             {
                 var data = new SpRulesDataSet();
 
-                using (var spClientContext = CreateClientContext(_appSettings))
+                using (var spClientContext = CreateClientContext(_config))
                 {
                     LoadCategories(data, spClientContext);
                     LoadPages(data, spClientContext);
@@ -167,7 +167,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             ctx.ExecuteQuery();
 
             var svc = new ListsSoapClient();
-            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.Username, _appSettings.Password, "SSW2000");
+            svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_config.Username, _config.Password, _config.Domain);
 
             XNamespace xmlns = "http://schemas.microsoft.com/sharepoint/soap/";
 
@@ -251,7 +251,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 {
                     _log.LogInformation("got web part id: {Id}", webPart.Id);
                     var svc = new WebPartPagesWebServiceSoapClient();
-                    svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_appSettings.Username, _appSettings.Password, "SSW2000");
+                    svc.ClientCredentials.Windows.ClientCredential = new System.Net.NetworkCredential(_config.Username, _config.Password, _config.Domain);
 
                     var webPartXmlString = svc.GetWebPart2(file.ServerRelativeUrl, webPart.Id, SpWebPartService.Storage.Shared, SPWebServiceBehavior.Version3);
                     var xmlDoc = XDocument.Parse(webPartXmlString);
@@ -261,10 +261,6 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                         cat.Content = contentElement.Value;
                         _log.LogInformation($"got web part content {contentElement.Value}");
                     }
-
-
-
-                   
                 }
             }
 
@@ -396,7 +392,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             {
                 try
                 {
-                    var relatedUri = _appSettings.SharePointUrl + "/_api/web/lists/getByTitle('Pages')/Items?$filter=GUID ne '" + rulePage.Guid + "' and substringof('" + keyWord + "',RulesKeyWords)&$select=GUID,Title,RulesKeyWords,FileRef";
+                    var relatedUri = _config.SharePointUrl + "/_api/web/lists/getByTitle('Pages')/Items?$filter=GUID ne '" + rulePage.Guid + "' and substringof('" + keyWord + "',RulesKeyWords)&$select=GUID,Title,RulesKeyWords,FileRef";
                     var relatedXmlPageString = webClient.DownloadString(relatedUri);
 
                     var xmlDoc = XDocument.Parse(relatedXmlPageString);
@@ -437,10 +433,10 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
 
 
 
-        public static ClientContext CreateClientContext(ApplicationSettings appSettings)
+        public static ClientContext CreateClientContext(SharepointConfig config)
         {
-            var ctx = new ClientContext(appSettings.SharePointUrl);
-            ctx.Credentials = new NetworkCredential(appSettings.Username, appSettings.Password, appSettings.Domain);
+            var ctx = new ClientContext(config.SharePointUrl);
+            ctx.Credentials = new NetworkCredential(config.Username, config.Password, config.Domain);
             ctx.ExecutingWebRequest += new EventHandler<WebRequestEventArgs>(SpClientContext_CustomHeaders);
             return ctx;
         }
@@ -517,7 +513,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 {
                     uri += "?showarchived=True";
                 }
-                var doc = await web.LoadFromWebAsync(_appSettings.SharePointUrl + uri);
+                var doc = await web.LoadFromWebAsync(_config.SharePointUrl + uri);
 
                 var ruleNodes = doc.DocumentNode.SelectNodes(
                     ".//*[@id='ctl00_PlaceHolderMain_RuleSummaryUC_SSWRuleSummaryUCDiv']/div/ol/li");
@@ -557,7 +553,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
         {
             _log.LogInformation("Scraping category details from home item...");
             HtmlWeb web = new HtmlWeb();
-            var doc = await web.LoadFromWebAsync(_appSettings.SharePointUrl);
+            var doc = await web.LoadFromWebAsync(_config.SharePointUrl);
             var container = doc.DocumentNode.SelectSingleNode(
                 ".//*[@id='ctl00_PlaceHolderMain_RuleLandingUC_SSWLandingUCDiv']/div[@class='ruleSortDiv']");
             var parentCategoryNodes = container.SelectNodes("div");
