@@ -34,5 +34,5 @@ stages:
 
   - job: hello_world
     steps:
-    - script: echo Hello, world!
-      displayName: 'Run a one-line script'
+    - script: type SSW.Rules.SharePointExtractor\SSW.Rules.SharePointExtractor.sln
+      displayName: print the solution file
