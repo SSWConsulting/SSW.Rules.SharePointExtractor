@@ -1,0 +1,27 @@
+# SharePoint Extract Pipeline
+# runs on on-premises build agent and executes the shaarepoint extractor program
+# to extract all sharepoint rules data & history into a data.json file.
+# https://aka.ms/yaml
+
+trigger:
+- main
+
+pr:
+  branches:
+    include:
+    - main
+
+stages: 
+- stage: extract
+  displayName: "Extract From SharePoint"
+  pool: 
+    name: On-Premise
+    demands: 
+    - Agent.Name -equals $(buildAgentName)
+
+  ## TODO - implement the real work
+  jobs: 
+  - job: hello world
+    steps:
+    - script: echo Hello, world!
+      displayName: 'Run a one-line script'
