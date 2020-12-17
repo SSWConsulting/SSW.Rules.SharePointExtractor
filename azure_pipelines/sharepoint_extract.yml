@@ -21,10 +21,15 @@ stages:
   jobs: 
   - job: build
     steps:
+
+    - task: NuGetCommand@2
+      inputs:
+        command: 'restore'
+        restoreSolution: 'SSW.Rules.SharePointExtractor\SSW.Rules.SharePointExtractor.sln' 
+
     - task: MSBuild@1
       inputs:
-        solution: SSW.Rules.SharePointExtractor\SSW.Rules.SharePointExtractor.sln
-        restoreNugetPackages: true
+        solution: 'SSW.Rules.SharePointExtractor\SSW.Rules.SharePointExtractor.sln'
 
 
   - job: hello_world
