@@ -19,7 +19,7 @@ stages:
 
   ## TODO - implement the real work
   jobs: 
-  - job: hello world
+  - job: hello_world
     steps:
     - script: echo Hello, world!
       displayName: 'Run a one-line script'
