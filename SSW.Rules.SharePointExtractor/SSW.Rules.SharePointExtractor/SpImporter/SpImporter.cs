@@ -87,10 +87,17 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             }
         }
 
-
+        public class UrlTerm
+        {
+            public string name { get; set; }
+            public string friendlyUrl { get; set; }
+            public string targetUrl { get; set; }
+        }
 
         private void LoadPages(SpRulesDataSet dataSet, ClientContext ctx)
         {
+            var urlTerms = new List<UrlTerm>();
+
             _log.LogInformation("Loading Navigation Terms...");
             TaxonomySession taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
             TermStore termStore = taxonomySession.TermStores.GetByName("Managed Metadata Service");
@@ -102,8 +109,19 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 i => i.LocalCustomProperties));
             ctx.ExecuteQuery();
 
-            var url = "";
-            termColl[0].LocalCustomProperties.TryGetValue("_Sys_Nav_TargetUrl", out url);
+            var targetUrl = "";
+            var friendlyUrl = "";
+            foreach(var term in termColl)
+            {
+                term.LocalCustomProperties.TryGetValue("_Sys_Nav_FriendlyUrlSegment", out friendlyUrl);
+                term.LocalCustomProperties.TryGetValue("_Sys_Nav_TargetUrl", out targetUrl);
+                urlTerms.Add(new UrlTerm
+                {
+                    name = term.Name,
+                    friendlyUrl = friendlyUrl,
+                    targetUrl = targetUrl
+                });
+            }
 
             _log.LogInformation("Loading  Pages...");
             var web = ctx.Web;
@@ -136,7 +154,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 if (item.ContentType.Name == "RulePage")
                 {
                     _log.LogInformation($"Rule Page {item["Title"]} - {count} of {items.Count}");
-                    var rulePage = LoadRulePage(dataSet, ctx, item);
+                    var rulePage = LoadRulePage(dataSet, ctx, item, urlTerms);
                     if (rulePage != null)
                     {
                         LoadContentHistory(rulePage, ctx, item);
@@ -157,7 +175,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 }
 
                 // DEBUG uncomment this for testing with a smaller amount of data
-                if (count > 3) break;
+                if (count > 30) break;
             }
         }
 
@@ -286,7 +304,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
 
         }
 
-        private RulePage LoadRulePage(SpRulesDataSet dataSet, ClientContext ctx, ListItem item)
+        private RulePage LoadRulePage(SpRulesDataSet dataSet, ClientContext ctx, ListItem item, List<UrlTerm> urlTerms)
         {
             if (string.IsNullOrEmpty(item["Title"]?.ToString())) return null;
 
@@ -304,9 +322,9 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 Guid = item["GUID"].ToString()
             };
 
-            //RulePageAuthors(item, dataSet, rulePage);
-            //RulePageRelated(item, dataSet, rulePage);
-            RulePageFriendlyUrls(item, dataSet, rulePage, ctx);
+            RulePageAuthors(item, dataSet, rulePage);
+            RulePageRelated(item, dataSet, rulePage);
+            RulePageFriendlyUrls(item, rulePage, urlTerms);
 
             rulePage.ImageUrls.UnionWith(GetImageUrls(rulePage.IntroText));
             rulePage.ImageUrls.UnionWith(GetImageUrls(rulePage.Content));
@@ -445,9 +463,9 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
         /// <param name="item"></param>
         /// <param name="dataSet"></param>
         /// <param name="rulePage"></param>
-        private void RulePageFriendlyUrls(ListItem item, SpRulesDataSet dataSet, RulePage rulePage, ClientContext ctx2)
+        private void RulePageFriendlyUrls(ListItem item, RulePage rulePage, List<UrlTerm>)
         {
-
+            var filename = item.FieldValues["FileLeafRef"].ToString().Trim();
         }
 
         /// <summary>
