@@ -703,7 +703,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
 
             return new string(
-                name.Replace(' ', '-')
+                name.Replace(' ', '-').Replace('/','-')
                     .ToLower()
                     .ToCharArray()
                     .Where(c => permittedCharacters.Contains(c))

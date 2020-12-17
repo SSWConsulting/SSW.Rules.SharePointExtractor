@@ -27,6 +27,8 @@ namespace SSW.Rules.SharePointExtractor.Models
 
         public IList<string> Related { get; set; } = new List<string>();
 
+        public IList<string> Redirects { get; set; } = new List<string>();
+
         public IList<Category> Categories { get; set; } = new List<Category>();
 
         public DateTime CreatedUtc { get; set; }

@@ -16,8 +16,6 @@ namespace SSW.Rules.SharePointExtractor.Models
         
         public IList<ParentCategory> ParentCategories { get; set; } = new List<ParentCategory>();
 
-
-
         public Category CategoryByTitle(string title)
         {
             var tmpCat = new Category() { Title = title }; // create tmp category object to perform title->name conversion

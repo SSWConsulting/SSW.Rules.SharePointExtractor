@@ -13,6 +13,7 @@ using System.Xml.Linq;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
 using Microsoft.SharePoint.Client;
+using Microsoft.SharePoint.Client.Publishing.Navigation;
 using Microsoft.SharePoint.Client.Sharing;
 using Microsoft.SharePoint.Client.Taxonomy;
 using Microsoft.SharePoint.Client.WebParts;
@@ -53,6 +54,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                     ScrapeHomePage(data).GetAwaiter().GetResult();
                     ScrapeCategoryPages(data).GetAwaiter().GetResult();
                     ScrapeCategoryPages(data, true).GetAwaiter().GetResult();
+                    LoadUrlTerms(data, spClientContext);
                 }
                 return data;
             }
@@ -86,7 +88,40 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             }
         }
 
+        private void LoadUrlTerms(SpRulesDataSet dataSet, ClientContext ctx)
+        {
+            TaxonomySession taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
+            TermStore termStore = taxonomySession.TermStores.GetByName("Managed Metadata Service");
+            TermGroup termGroup = termStore.Groups.GetByName("Site Collection - rules.ssw.com.au");
+            TermSet termSet = termGroup.TermSets.GetByName("Home Navigation");
+            TermCollection termColl = termSet.Terms;
+            ctx.Load(termColl, t => t.Include(
+                i => i.Name,
+                i => i.LocalCustomProperties));
+            ctx.ExecuteQuery();
+            
+            //var targetUrl = ""; //This is the URL to the .aspx page
+            var friendlyUrl = "";
+            foreach(var term in termColl)
+            {
+                term.LocalCustomProperties.TryGetValue("_Sys_Nav_FriendlyUrlSegment", out friendlyUrl);
+                //term.LocalCustomProperties.TryGetValue("_Sys_Nav_TargetUrl", out targetUrl);
+                
+                foreach (RulePage rulePage in dataSet.Rules.Where(r => r.Title.Equals(term.Name) || r.Name.Equals(term.Name.ToLower().Replace(' ','-'))))
+                {
+                    //if (!String.IsNullOrEmpty(targetUrl))
+                    //{
+                    //    targetUrl = targetUrl.Replace("~sitecollection/Pages/", "").Replace(".aspx", "");
+                    //    rulePage.Redirects.Add(targetUrl);
+                    //}
 
+                    if(!String.IsNullOrEmpty(friendlyUrl))
+                    {
+                        rulePage.Redirects.Add(friendlyUrl);
+                    }
+                }
+            }
+        }
 
         private void LoadPages(SpRulesDataSet dataSet, ClientContext ctx)
         {
@@ -104,7 +139,6 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             ListItemCollection items = oList.GetItems(camlQuery);
             ctx.Load(items); 
             ctx.ExecuteQuery();
-
 
             int count = 0;
             foreach (var item in items)
@@ -212,9 +246,6 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
 
 
 
-
-
-
         private Category LoadRuleSummaryPage(SpRulesDataSet dataSet, ListItem page, ClientContext ctx)
         {
             var cat = dataSet.CategoryByTitle(page["Title"]?.ToString());
@@ -261,10 +292,6 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                         cat.Content = contentElement.Value;
                         _log.LogInformation($"got web part content {contentElement.Value}");
                     }
-
-
-
-                   
                 }
             }
 
@@ -294,12 +321,11 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             rulePage.ImageUrls.UnionWith(GetImageUrls(rulePage.IntroText));
             rulePage.ImageUrls.UnionWith(GetImageUrls(rulePage.Content));
 
-
             // I could not work out how to drill into the RuleCategoriesMetaData object other than serializing to json and parsing via JObject
             var metadataJason = JsonConvert.SerializeObject(item["RuleCategoriesMetadata"]);
             // follow metadata -> term store reference to set rule->category relationship
             var jObject = JObject.Parse(metadataJason);
-
+           
             foreach (var reference in jObject["_Child_Items_"].Children())
             {
                 //_log.LogInformation("link to {REF}", reference);
@@ -312,6 +338,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                     rulePage.Categories.Add(catData);
                 }
             }
+
             dataSet.Rules.Add(rulePage);
             return rulePage;
         }
@@ -433,9 +460,6 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             if (data.Length < 2) return string.Empty;
             return data[0];
         }
-
-
-
 
         public static ClientContext CreateClientContext(ApplicationSettings appSettings)
         {
@@ -596,10 +620,6 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             } // end foreach parent 
 
         }
-
-
-
-
     }
 
 
