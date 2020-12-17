@@ -1,19 +1,27 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
+# SharePoint Extract Pipeline
+# runs on on-premises build agent and executes the shaarepoint extractor program
+# to extract all sharepoint rules data & history into a data.json file.
 # https://aka.ms/yaml
 
 trigger:
 - main
 
-pool:
-  vmImage: 'ubuntu-latest'
+pr:
+  branches:
+    include:
+    - main
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+stages: 
+- stage: extract
+  displayName: "Extract From SharePoint"
+  pool: 
+    name: On-Premise
+    demands: 
+    - Agent.Name -equals $(buildAgentName)
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+  ## TODO - implement the real work
+  jobs: 
+  - job: hello world
+    steps:
+    - script: echo Hello, world!
+      displayName: 'Run a one-line script'
