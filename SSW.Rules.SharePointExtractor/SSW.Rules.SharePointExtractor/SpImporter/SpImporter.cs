@@ -248,11 +248,19 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             }
 
             cat.Content = page["PublishingPageContent"]?.ToString();
+           
             cat.IntroText = page["RuleSummaryIntro"]?.ToString();
             cat.PageGuid = page["GUID"]?.ToString();
             cat.ImageUrls.UnionWith(GetImageUrls(cat.Content));
 
             ExtractWebParts(cat, page, ctx);
+
+            if (cat.Content != null)
+            {
+                MatchEvaluator matchEval = new MatchEvaluator(ReplaceRelativeURl);
+                cat.Content = Regex.Replace(cat.Content, @"(""(\/_layouts\/15\/FIXUPREDIRECT.ASPX).*""\s)", matchEval);
+            }
+
             return cat;
         }
 
@@ -282,6 +290,11 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                     if (contentElement != null)
                     {
                         cat.Content = contentElement.Value;
+                        if (cat.Content != null)
+                        {
+                            MatchEvaluator matchEval = new MatchEvaluator(ReplaceRelativeURl);
+                            cat.Content = Regex.Replace(cat.Content, @"(""(\/_layouts\/15\/FIXUPREDIRECT.ASPX).*""\s)", matchEval);
+                        }
                         _log.LogInformation($"got web part content {contentElement.Value}");
                     }
                 }
@@ -318,7 +331,21 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             // I could not work out how to drill into the RuleCategoriesMetaData object other than serializing to json and parsing via JObject
             var metadataJason = JsonConvert.SerializeObject(item["RuleCategoriesMetadata"]);
             // follow metadata -> term store reference to set rule->category relationship
-            var jObject = JObject.Parse(metadataJason);
+
+            var jArray = JArray.Parse(metadataJason);
+
+            foreach(var elt in jArray)
+            {
+                var termGuid = elt["TermGuid"].NpValue<string>();
+                var catData = dataSet.Categories.FirstOrDefault(c =>
+                    c.TermStoreGuid.Equals(termGuid, StringComparison.InvariantCultureIgnoreCase));
+                if (catData != null)
+                {
+                    rulePage.Categories.Add(catData);
+                }
+            }
+
+            /* var jObject = JObject.Parse(metadataJason); 
            
             foreach (var reference in jObject["_Child_Items_"].Children())
             {
@@ -331,12 +358,12 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 {
                     rulePage.Categories.Add(catData);
                 }
-            }
-
+            }*/
+           
             if (rulePage.Content != null)
             {
                 MatchEvaluator matchEval = new MatchEvaluator(ReplaceRelativeURl);
-                rulePage.Content = Regex.Replace(rulePage.Content, @"(""(\/_layouts\/15\/FIXUPREDIRECT.ASPX).*""\s)", matchEval);
+                rulePage.Content = Regex.Replace(rulePage.Content, @"(""(\/_layouts\/15\/FIXUPREDIRECT.ASPX)[^""]*"")", matchEval);
             }
 
             dataSet.Rules.Add(rulePage);
