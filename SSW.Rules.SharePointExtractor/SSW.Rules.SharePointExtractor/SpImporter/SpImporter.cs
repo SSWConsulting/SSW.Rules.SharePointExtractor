@@ -17,6 +17,7 @@ using Microsoft.SharePoint.Client.Publishing.Navigation;
 using Microsoft.SharePoint.Client.Sharing;
 using Microsoft.SharePoint.Client.Taxonomy;
 using Microsoft.SharePoint.Client.WebParts;
+using Microsoft.SharePoint;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SSW.Rules.SharePointExtractor.Models;
@@ -31,7 +32,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
         private readonly ILogger<SpImporter> _log;
         private readonly ApplicationSettings _appSettings;
 
-
+        private TermCollection _termColl;
 
         public SpImporter(ILogger<SpImporter> log, ApplicationSettings appSettings)
         {
@@ -48,6 +49,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
 
                 using (var spClientContext = CreateClientContext(_appSettings))
                 {
+                    _termColl = initTermCollection(spClientContext);
                     LoadCategories(data, spClientContext);
                     LoadPages(data, spClientContext);
                     CullEmptyCategories(data);
@@ -89,20 +91,10 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
         }
 
         private void LoadUrlTerms(SpRulesDataSet dataSet, ClientContext ctx)
-        {
-            TaxonomySession taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
-            TermStore termStore = taxonomySession.TermStores.GetByName("Managed Metadata Service");
-            TermGroup termGroup = termStore.Groups.GetByName("Site Collection - rules.ssw.com.au");
-            TermSet termSet = termGroup.TermSets.GetByName("Home Navigation");
-            TermCollection termColl = termSet.Terms;
-            ctx.Load(termColl, t => t.Include(
-                i => i.Name,
-                i => i.LocalCustomProperties));
-            ctx.ExecuteQuery();
-            
+        {           
             //var targetUrl = ""; //This is the URL to the .aspx page
             var friendlyUrl = "";
-            foreach(var term in termColl)
+            foreach(var term in _termColl)
             {
                 term.LocalCustomProperties.TryGetValue("_Sys_Nav_FriendlyUrlSegment", out friendlyUrl);
                 //term.LocalCustomProperties.TryGetValue("_Sys_Nav_TargetUrl", out targetUrl);
@@ -175,7 +167,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 }
 
                 // DEBUG uncomment this for testing with a smaller amount of data
-                //if (count > 300) break;
+                if (count > 30) break;
             }
         }
 
@@ -315,6 +307,8 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 Guid = item["GUID"].ToString()
             };
 
+            
+
             RulePageAuthors(item, dataSet, rulePage);
             RulePageRelated(item, dataSet, rulePage);
 
@@ -339,8 +333,47 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 }
             }
 
+            if (rulePage.Content != null)
+            {
+                MatchEvaluator matchEval = new MatchEvaluator(ReplaceRelativeURl);
+                rulePage.Content = Regex.Replace(rulePage.Content, @"(""(\/_layouts\/15\/FIXUPREDIRECT.ASPX).*""\s)", matchEval);
+            }
+
             dataSet.Rules.Add(rulePage);
             return rulePage;
+        }
+
+        private string ReplaceRelativeURl(Match match)
+        {
+            string uri = match.Value.Substring(match.Value.IndexOf("\"") + 1);
+            uri = uri.Substring(0, uri.IndexOf("\""));
+            var paramstring = uri.Substring(uri.LastIndexOf("?") + 1);
+            var sep = new string[] { "&amp;" };
+            string[] parameters = paramstring.Split(sep, StringSplitOptions.None);
+            var paramNameValue = new Dictionary<string, string>();
+            foreach (var p in parameters)
+            {
+                var param = p.Split('=');
+                paramNameValue.Add(param[0], param[1]);
+            }
+    
+            var term = _termColl.Where(t => t.Id == Guid.Parse(paramNameValue["TermId"])).FirstOrDefault();
+            var targetUrl = term.LocalCustomProperties["_Sys_Nav_TargetUrl"];
+            var newUri = targetUrl.Replace("~sitecollection/Pages", "").Replace(".aspx", "");
+            newUri = $@"""{newUri}""" + (match.Value.Count(c => c == '"') > 2 ? match.Value.Substring(match.Value.IndexOf("\"", 0, 2)) : "");
+            return newUri;
+        }
+
+        private TermCollection initTermCollection(ClientContext ctx)
+        {
+            TaxonomySession taxonomySession = TaxonomySession.GetTaxonomySession(ctx);
+            TermStore termStore = taxonomySession.TermStores.GetByName("Managed Metadata Service");
+            TermGroup termGroup = termStore.Groups.GetByName("Site Collection - rules.ssw.com.au");
+            TermSet termSet = termGroup.TermSets.GetByName("Home Navigation");
+            TermCollection termColl = termSet.Terms;
+            ctx.Load(termColl);
+            ctx.ExecuteQuery();
+            return termColl;
         }
 
         /// <summary>
