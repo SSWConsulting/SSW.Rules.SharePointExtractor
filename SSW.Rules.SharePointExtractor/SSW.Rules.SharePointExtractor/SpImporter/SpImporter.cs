@@ -167,7 +167,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 }
 
                 // DEBUG uncomment this for testing with a smaller amount of data
-                if (count > 30) break;
+                //if (count > 30) break;
             }
         }
 
@@ -387,7 +387,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             var term = _termColl.Where(t => t.Id == Guid.Parse(paramNameValue["TermId"])).FirstOrDefault();
             var targetUrl = term.LocalCustomProperties["_Sys_Nav_TargetUrl"];
             var newUri = targetUrl.Replace("~sitecollection/Pages", "").Replace(".aspx", "");
-            newUri = $@"""{newUri}""" + (match.Value.Count(c => c == '"') > 2 ? match.Value.Substring(match.Value.IndexOf("\"", 0, 2)) : "");
+            newUri = $@"""{newUri}""";
             return newUri;
         }
 
