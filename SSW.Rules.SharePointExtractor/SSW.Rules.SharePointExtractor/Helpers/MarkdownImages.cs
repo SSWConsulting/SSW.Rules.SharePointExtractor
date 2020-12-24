@@ -53,8 +53,10 @@ namespace SSW.Rules.SharePointExtractor.Helpers
 
                 String[] separatorFile = { "](" };
                 var imgInfo = elts[0].Split(separatorFile, StringSplitOptions.RemoveEmptyEntries);
-
-                result = elts[0].Replace(imgInfo[0].Trim() + "]", "![" + elts[1].Trim() + "]");
+                if (elts.Length > 1)
+                    result = elts[0].Replace(imgInfo[0].Trim() + "]", "![" + elts[1].Trim() + "]");
+                else
+                    result = elts[0];
 
             }
             result = AddTag(result);

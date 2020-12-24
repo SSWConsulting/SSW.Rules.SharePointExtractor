@@ -12,7 +12,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
         public static string Create(string content, string type)
         {
             var fencedBlock = "<br/><br/>::: " + type + "<br/>";
-            fencedBlock += content;
+            fencedBlock += content.Trim();
             fencedBlock += "<br/>:::<br/><br/>";
             return fencedBlock;
         }

@@ -1,6 +1,7 @@
 ﻿using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 
 namespace SSW.Rules.SharePointExtractor.Helpers
@@ -69,7 +70,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
                     if (className2?.IndexOf(className, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         item.Remove();
-                    }                    
+                    }
                 }
                 return doc.DocumentNode.OuterHtml;
             }
@@ -108,6 +109,71 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             }
 
             return result;
+        }
+
+        public static string EscapeTagsInPre(string html)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            var htmlNodes = doc.DocumentNode.SelectNodes("//pre");
+            if (htmlNodes != null) { 
+            foreach(var node in htmlNodes)
+            {
+                node.InnerHtml = node.InnerHtml.Replace("<", "&lt;");
+                node.InnerHtml = node.InnerHtml.Replace("<", "&gt;");
+            }
+            }
+            return doc.DocumentNode.InnerHtml;
+        }
+
+
+        public static string ReplaceHtmlWithTag(string html, string oldHtmlTag)
+        {
+            var doc = new HtmlDocument();
+            doc.LoadHtml(html);
+            
+            var nodes = HtmlHelper.GetNodesWithTag(doc, oldHtmlTag)?.OrderByDescending(n => n.Depth);
+            while (nodes != null && nodes.Count() > 0)
+            {
+                var node = nodes.First();
+                HtmlNode parent = null;
+                var parentXpath = node.ParentNode.XPath;
+                if (parentXpath != doc.DocumentNode.XPath)
+                {
+                    parent = doc.DocumentNode.SelectSingleNode(parentXpath);
+                }
+                else
+                {
+                    parent = doc.DocumentNode;
+                }
+                if (parent != null && !string.IsNullOrEmpty(node.OuterHtml))
+                {
+                    bool first = true;
+
+                    HtmlNode firstChildNode = null;
+                    foreach (var child in node.ChildNodes)
+                    {
+                        if (string.IsNullOrEmpty(child.OuterHtml.Trim()))
+                            continue;
+                        var newNode = HtmlNode.CreateNode(child.OuterHtml.Trim());
+                        if (first)
+                        {
+                            parent.InsertAfter(newNode, node);
+                            firstChildNode = newNode;
+                            first = false;
+                        }
+                        else
+                        {
+                            parent.InsertAfter(newNode, firstChildNode);
+                        }
+
+                    }
+                    parent.RemoveChild(node);
+                }
+                nodes = HtmlHelper.GetNodesWithTag(doc, oldHtmlTag)?.OrderByDescending(n => n.Depth);
+            }
+
+            return doc.DocumentNode.InnerHtml;
         }
 
         public static string ReplaceHtmlWithFencedBlock(string html, string oldHtmlTag, string oldClassName, string className)
@@ -149,7 +215,26 @@ namespace SSW.Rules.SharePointExtractor.Helpers
 
             return result;
         }
+        public static List<HtmlNode> GetNodesWithTag(HtmlDocument doc, string htmlTag)
+        {
+            var htmlNodes = doc.DocumentNode.SelectNodes("//" + htmlTag);
 
+            if (htmlNodes == null)
+                return null;
+
+            //remove if parent <pre>
+            // remove if outerhtml is empty
+            var filterNode = new List<HtmlNode>();
+            foreach(var node in htmlNodes)
+            {
+                if (string.IsNullOrEmpty(node.OuterHtml))
+                    continue; 
+                if(node.XPath.Contains("/pre"))
+                    continue;
+                filterNode.Add(node);
+            }
+            return filterNode;
+        }
         public static HtmlNodeCollection GetNodesWithTagAndClassName(string content, string htmlTag, string className)
         {
             var doc = new HtmlDocument();

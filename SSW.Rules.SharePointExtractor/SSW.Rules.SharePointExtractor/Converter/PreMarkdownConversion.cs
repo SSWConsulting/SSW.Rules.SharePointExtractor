@@ -32,8 +32,15 @@ namespace SSW.Rules.SharePointExtractor.Converter
             result = Greybox.Process(result);
 
             //Remove unhandled tags
-            result = HtmlDescriptionList.Process(result);
+            //result = HtmlDescriptionList.Process(result);
             result = HtmlDescriptionDetails.Process(result);
+
+            result = HtmlHelper.ReplaceHtmlWithTag(result, "dl");
+            result = HtmlHelper.ReplaceHtmlWithTag(result, "dt");
+            result = HtmlHelper.ReplaceHtmlWithTag(result, "dd");
+
+            result = HtmlHelper.EscapeTagsInPre(result);
+
             result = HtmlFont.Process(result);
 
             //Remove leading and trailing whitespace
