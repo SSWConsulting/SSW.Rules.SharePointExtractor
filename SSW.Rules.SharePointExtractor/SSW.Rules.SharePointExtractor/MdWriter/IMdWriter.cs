@@ -704,7 +704,6 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         public static string ToFileName(this string name)
         {
             string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
-
             var newName= new string(
                 name.Replace(' ', '-').Replace('/', '-')
                     .ToLower()
@@ -715,6 +714,20 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             return newName;
         }
 
+        //This is for preserving the SharePoint Beta Link Redirects
+        public static string CreateUriAndRedirect(this string name, RulePage rule)
+        {
+            string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
+            var newName = new string(
+                name.Replace(' ', '-')
+                    .ToLower()
+                    .ToCharArray()
+                    .Where(c => permittedCharacters.Contains(c))
+                    .ToArray());
+            rule.Redirects.Add(newName);
+
+            return name.ToFileName();
+        }
 
         public static string ToMarkdown(this ContentVersion contentVersion, RulePage rulePage)
         {

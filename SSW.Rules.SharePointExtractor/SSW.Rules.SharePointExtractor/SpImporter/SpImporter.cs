@@ -167,7 +167,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 }
 
                 // DEBUG uncomment this for testing with a smaller amount of data
-                //if (count > 30) break;
+                //if (count > 100) break;
             }
         }
 
