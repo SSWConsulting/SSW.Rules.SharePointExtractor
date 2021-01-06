@@ -717,6 +717,8 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         //This is for preserving the SharePoint Beta Link Redirects
         public static string CreateUriAndRedirect(this string name, RulePage rule)
         {
+            var gatsbyUri = name.ToFileName();
+
             //Add SharePoint Beta-Link redirect
             string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
             var newName = new string(
@@ -725,8 +727,12 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                     .ToCharArray()
                     .Where(c => permittedCharacters.Contains(c))
                     .ToArray());
-            rule.Redirects.Add(newName);
 
+            if(newName != gatsbyUri)
+            {
+                rule.Redirects.Add(newName);
+            }
+            
             //Add SharePoint Link Redirect
             /*
             - Spaces and the following characters /.= are converted to -
@@ -741,10 +747,14 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                     .ToCharArray()
                     .Where(c => permittedCharacters.Contains(c))
                     .ToArray());
-            newName = Regex.Replace(newName, "-{2,}", "-").Trim('-');
-            rule.Redirects.Add(spNewName);
+            spNewName = Regex.Replace(spNewName, "-{2,}", "-").Trim('-');
 
-            return name.ToFileName();
+            if(spNewName != gatsbyUri)
+            {
+                rule.Redirects.Add(spNewName);
+            }
+            
+            return gatsbyUri;
         }
 
         public static string ToMarkdown(this ContentVersion contentVersion, RulePage rulePage)
