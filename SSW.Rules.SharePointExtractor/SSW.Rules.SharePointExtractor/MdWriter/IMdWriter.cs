@@ -717,6 +717,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         //This is for preserving the SharePoint Beta Link Redirects
         public static string CreateUriAndRedirect(this string name, RulePage rule)
         {
+            //Add SharePoint Beta-Link redirect
             string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
             var newName = new string(
                 name.Replace(' ', '-')
@@ -725,6 +726,23 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                     .Where(c => permittedCharacters.Contains(c))
                     .ToArray());
             rule.Redirects.Add(newName);
+
+            //Add SharePoint Link Redirect
+            /*
+            - Spaces and the following characters /.= are converted to -
+            - The following characters are removed &?':",%#~*
+            - Everything is lowercase
+            - Multiple instances of - are converted to a single -
+            */
+            permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-–_()’＂@+";
+            var spNewName = new string(
+                name.Replace(' ', '-').Replace('/', '-').Replace('.','-').Replace('=', '-')
+                    .ToLower()
+                    .ToCharArray()
+                    .Where(c => permittedCharacters.Contains(c))
+                    .ToArray());
+            newName = Regex.Replace(newName, "-{2,}", "-").Trim('-');
+            rule.Redirects.Add(spNewName);
 
             return name.ToFileName();
         }
