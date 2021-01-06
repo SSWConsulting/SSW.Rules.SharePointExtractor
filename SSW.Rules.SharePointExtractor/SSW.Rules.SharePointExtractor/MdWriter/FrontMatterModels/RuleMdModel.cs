@@ -45,12 +45,11 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
     {
         public AuthorMdModel(Employee e)
         {
-            Id = e.Id;
             Title = e.Title;
+            Url = "https://ssw.com.au/people/" + e.Title.ToLower().Replace(' ', '-');
         }
 
-        public int Id { get; }
         public string Title { get; }
+        public string Url { get; set; }
     }
 }
-
