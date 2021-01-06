@@ -42,9 +42,9 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             result = result.Replace("<dl class=\"bad\" style=\"margin:0px;line-height:17px;padding-top:10px;padding-bottom:10px;padding-left:20px;font-family:arial, helvetica, sans-serif;\">","");
 
             result = result.Replace("<dl>", "");
-            */
             result = result.Replace("<dt>", "&lt;dt&gt;");
             result = result.Replace("</dt>", "&lt;/dt&gt;");
+            */
 
             return result;
         }
