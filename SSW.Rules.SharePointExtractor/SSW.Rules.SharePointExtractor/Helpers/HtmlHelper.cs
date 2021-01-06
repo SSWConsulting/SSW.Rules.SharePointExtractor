@@ -53,6 +53,29 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             return result;
         }
 
+        public static string RemoveHtmlWithTagAndClassName(string html, string htmlTag, string className)
+        {
+            string result = html;
+            var nodesFound = HtmlHelper.GetNodesWithTagAndClassName(html, htmlTag, className);
+
+            if (nodesFound.Count > 0)
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(result);
+
+                foreach (var item in doc.DocumentNode.SelectNodes("//" + htmlTag))
+                {
+                    var className2 = item.Attributes["class"]?.Value;
+                    if (className2?.IndexOf(className, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        item.Remove();
+                    }                    
+                }
+                return doc.DocumentNode.OuterHtml;
+            }
+            return result;
+        }
+
         public static string ReplaceHtmlWithFullTagAndAttribute(string html, string oldHtmlTag, string attr, string attrValue, string newHtmlTag)
         {
             string result = html;
@@ -188,6 +211,6 @@ namespace SSW.Rules.SharePointExtractor.Helpers
                 }
             }
             return result;
-        }        
+        }
     }
 }

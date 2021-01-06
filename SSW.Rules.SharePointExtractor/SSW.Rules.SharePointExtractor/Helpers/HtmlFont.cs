@@ -29,6 +29,12 @@ namespace SSW.Rules.SharePointExtractor.Helpers
 
             result = HtmlHelper.ReplaceHtmlWithFullTagAndAttribute(result, "font", "style", "background-color&#58;#ffff00;", "mark");
 
+            result = HtmlHelper.RemoveHtmlWithTagAndClassName(result, "p", "ms-rteCustom-SSW-Only");
+            result = HtmlHelper.RemoveHtmlWithTagAndClassName(result, "font", "ms-rteCustom-SSW-Only");
+            result = HtmlHelper.RemoveHtmlWithTagAndClassName(result, "div", "ms-rteCustom-SSW-Only");
+            result = HtmlHelper.RemoveHtmlWithTagAndClassName(result, "p", "ssw15-rteElement-SSW-Only");
+            result = HtmlHelper.RemoveHtmlWithTagAndClassName(result, "div", "ssw15-rteElement-ContentBlock-SSW-Only");
+
             //Clean HTML
             /*
             result = result.Replace("<font class=\"ms-rteCustom-SSW-Only\" >","");

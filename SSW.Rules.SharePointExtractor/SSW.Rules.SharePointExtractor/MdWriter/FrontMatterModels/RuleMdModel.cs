@@ -19,6 +19,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
             Authors = rule.Employees.Select(e => new AuthorMdModel(e)).ToList();
             ArchivedReason = rule.ArchivedReason;
             Related = rule.Related.ToList();
+            Redirects = rule.Redirects.ToList();
         }
 
         public string Type => "rule";
@@ -36,18 +37,19 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
         public List<AuthorMdModel> Authors { get; }
 
         public List<string> Related { get; }
+
+        public List<string> Redirects { get; }
     }
 
     public class AuthorMdModel
     {
         public AuthorMdModel(Employee e)
         {
-            Id = e.Id;
             Title = e.Title;
+            Url = "https://ssw.com.au/people/" + e.Title.ToLower().Replace(' ', '-');
         }
 
-        public int Id { get; }
         public string Title { get; }
+        public string Url { get; set; }
     }
 }
-

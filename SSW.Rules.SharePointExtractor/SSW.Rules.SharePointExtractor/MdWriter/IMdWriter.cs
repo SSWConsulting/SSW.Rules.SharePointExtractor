@@ -7,6 +7,9 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using LibGit2Sharp;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -702,13 +705,14 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         {
             string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
 
-            return new string(
-                name.Replace(' ', '-')
+            var newName= new string(
+                name.Replace(' ', '-').Replace('/', '-')
                     .ToLower()
                     .ToCharArray()
                     .Where(c => permittedCharacters.Contains(c))
                     .ToArray());
-
+            newName = Regex.Replace(newName, "-{2,}", "-").Trim('-');        
+            return newName;
         }
 
 
@@ -758,8 +762,6 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             string result = MarkdownConverter.Convert(html);
             return result;
         }
-
-
     }
 
 
