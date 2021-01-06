@@ -385,10 +385,17 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             }
     
             var term = _termColl.Where(t => t.Id == Guid.Parse(paramNameValue["TermId"])).FirstOrDefault();
-            var targetUrl = term.LocalCustomProperties["_Sys_Nav_TargetUrl"];
-            var newUri = targetUrl.Replace("~sitecollection/Pages", "").Replace(".aspx", "");
-            newUri = $@"""{newUri}""";
-            return newUri;
+            if(term != null)
+            {
+                var targetUrl = term.LocalCustomProperties["_Sys_Nav_TargetUrl"];
+                var newUri = targetUrl.Replace("~sitecollection/Pages", "").Replace(".aspx", "");
+                newUri = $@"""{newUri}""";
+
+                return newUri;
+            } else {
+                _log.LogWarning("Couldn't resolve SharePoint Relative URL: {SpRelativeUrl} from the term store", match.Value);
+                return match.Value;
+            }
         }
 
         private TermCollection initTermCollection(ClientContext ctx)
