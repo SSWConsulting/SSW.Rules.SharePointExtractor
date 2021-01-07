@@ -14,7 +14,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
         {
             Title = cat.Title;
             Guid = cat.PageGuid ?? cat.TermStoreGuid;
-            Uid = cat.Name.ToFileName();
+            Uri = cat.Name.ToFileName();
             Index = cat.Rules.Select(r => r.Name.ToFileName()).ToList();
         }
 
@@ -24,7 +24,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
 
         public string Guid { get; }
 
-        public string Uid { get;  }
+        public string Uri { get;  }
 
         public List<string> Index { get; }
 

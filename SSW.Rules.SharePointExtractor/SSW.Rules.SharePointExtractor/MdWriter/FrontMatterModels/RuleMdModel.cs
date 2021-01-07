@@ -15,11 +15,11 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
             Title = rule.Title;
             Created = rule.CreatedUtc;
             Guid = rule.Guid;
-            Uri = rule.Name.ToFileName();
+            Uri = rule.Name.CreateUriAndRedirect(rule);
             Authors = rule.Employees.Select(e => new AuthorMdModel(e)).ToList();
             ArchivedReason = rule.ArchivedReason;
             Related = rule.Related.ToList();
-            Redirects = rule.Redirects.ToList();
+            Redirects = rule.Redirects.Distinct().ToList();
         }
 
         public string Type => "rule";

@@ -23,6 +23,7 @@ using Newtonsoft.Json.Linq;
 using SSW.Rules.SharePointExtractor.Models;
 using SSW.Rules.SharePointExtractor.SpRulesListsService;
 using SSW.Rules.SharePointExtractor.SpWebPartService;
+using SSW.Rules.SharePointExtractor.MdWriter;
 
 namespace SSW.Rules.SharePointExtractor.SpImporter
 {
@@ -167,7 +168,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 }
 
                 // DEBUG uncomment this for testing with a smaller amount of data
-                //if (count > 30) break;
+                //if (count > 100) break;
             }
         }
 
@@ -387,11 +388,8 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             var term = _termColl.Where(t => t.Id == Guid.Parse(paramNameValue["TermId"])).FirstOrDefault();
             if(term != null)
             {
-                var targetUrl = term.LocalCustomProperties["_Sys_Nav_TargetUrl"];
-                var newUri = targetUrl.Replace("~sitecollection/Pages", "").Replace(".aspx", "");
-                newUri = $@"""{newUri}""";
-
-                return newUri;
+                var newUri = RuleExtensions.ToFileName(term.Name);
+                return "/" + newUri;
             } else {
                 _log.LogWarning("Couldn't resolve SharePoint Relative URL: {SpRelativeUrl} from the term store", match.Value);
                 return match.Value;
