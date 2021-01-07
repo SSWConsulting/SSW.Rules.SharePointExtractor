@@ -229,7 +229,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                             $@"---
 {YamlSerializer.Serialize(new CategoryMdModel(cat))}
 ---
-{ MarkdownConverter.Convert(html)}
+{ MarkdownConverter.Convert(new RuleHtmlPage { Uri = cat.Name.ToFileName(), Title = cat.Title, Html = html })}
 
 ";
                 _log.LogInformation($"writing {catPaths.CategoryFileFull}");
@@ -719,7 +719,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         public static string ToMarkdown(this ContentVersion contentVersion, RulePage rulePage)
         {
             var result = $@"{rulePage.ToFrontMatter()}
-{ToMarkdownBody(contentVersion.IntroText, contentVersion.Content, true)}
+{ToMarkdownBody(rulePage, contentVersion.IntroText, contentVersion.Content, true)}
 ";
             return result;
         }
@@ -727,7 +727,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         public static string ToMarkdown(this RulePage rulePage, bool skipHtmlMarkdownConversion)
         {
             var result = $@"{rulePage.ToFrontMatter()}
-{ToMarkdownBody(rulePage.IntroText, rulePage.Content, skipHtmlMarkdownConversion)}
+{ToMarkdownBody(rulePage, rulePage.IntroText, rulePage.Content, skipHtmlMarkdownConversion)}
 ";
             return result;
         }
@@ -743,7 +743,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
 
 
 
-        public static string ToMarkdownBody(string introText, string content, bool skipHtmlMarkdownConversion)
+        public static string ToMarkdownBody(RulePage rulePage, string introText, string content, bool skipHtmlMarkdownConversion)
         {
 
 
@@ -759,10 +759,15 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
                 return html;
             }
 
-            string result = MarkdownConverter.Convert(html);
+            var ruleHtmlPage = new RuleHtmlPage()
+            {
+                Uri = rulePage.Name.ToFileName(),
+                Title = rulePage.Title,
+                Html = html
+            };
+
+            string result = MarkdownConverter.Convert(ruleHtmlPage);
             return result;
         }
     }
-
-
 }

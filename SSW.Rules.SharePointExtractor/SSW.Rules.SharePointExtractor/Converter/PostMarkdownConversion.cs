@@ -31,6 +31,7 @@ namespace SSW.Rules.SharePointExtractor.Converter
 
             //This endintro marker is for showing the rule blurb on the category page
             result = result.Replace("<excerpt class='endintro'></excerpt>", "<!--endintro-->");
+
             return result;
         }
 

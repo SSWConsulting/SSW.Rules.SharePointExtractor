@@ -191,6 +191,7 @@
     <Compile Include="MdWriter\FrontMatterModels\RuleMdModel.cs" />
     <Compile Include="MdWriter\IMdWriter.cs" />
     <Compile Include="Models\Category.cs" />
+    <Compile Include="Models\RuleHtmlPage.cs" />
     <Compile Include="Models\Employee.cs" />
     <Compile Include="Models\HistoryInfos.cs" />
     <Compile Include="Models\IHasContentHistory.cs" />

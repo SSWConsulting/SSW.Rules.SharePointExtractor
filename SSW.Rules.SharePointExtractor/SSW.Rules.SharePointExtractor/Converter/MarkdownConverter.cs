@@ -1,7 +1,10 @@
 ﻿using HtmlAgilityPack;
 using ReverseMarkdown;
+using SSW.Rules.SharePointExtractor.MdWriter;
+using SSW.Rules.SharePointExtractor.Models;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace SSW.Rules.SharePointExtractor.Converter
 {
@@ -21,9 +24,9 @@ namespace SSW.Rules.SharePointExtractor.Converter
 
         private static ReverseMarkdown.Converter converter = new ReverseMarkdown.Converter(config);
 
-        public static string Convert(string html)
+        public static string Convert(RuleHtmlPage ruleHtmlPage)
         {
-            html = PreMarkdownConversion.Process(html);
+            string html = PreMarkdownConversion.Process(ruleHtmlPage.Html);
 
             var ignoreHtmlTags = new HashSet<string> { "excerpt", "mark","sup", "dd", "dl", "dt", "font", "char", "type", "crmwebsiteroot" };
 
@@ -55,7 +58,24 @@ namespace SSW.Rules.SharePointExtractor.Converter
                 return " ";
             }
 
+            //Check for any URL Redirects
+            if (Regex.IsMatch(result, @"(""(\/_layouts\/15\/FIXUPREDIRECT.ASPX)[^""]*"")"))
+            {
+                LogMarkdownConversionIssue(ruleHtmlPage, "URL Links", "Unresolved relative SharePoint URL");
+            }
+
             return result.Trim();
-        } 
+        }
+
+        public static void LogMarkdownConversionIssue(RuleHtmlPage ruleHtmlPage, string issue, string details)
+        {
+            string fileName = "MarkDownConversionIssues.csv";
+            if (!System.IO.File.Exists(fileName))
+            {
+                System.IO.File.WriteAllText(fileName, "URL,RuleName,Issue,Details" + Environment.NewLine);
+            }
+
+            System.IO.File.AppendAllText(fileName, ruleHtmlPage.Uri + "," + ruleHtmlPage.Title + "," + issue + "," + details + Environment.NewLine);
+        }
     }
 }
