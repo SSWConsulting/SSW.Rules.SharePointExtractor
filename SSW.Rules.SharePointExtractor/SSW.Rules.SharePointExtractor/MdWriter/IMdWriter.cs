@@ -732,29 +732,34 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             {
                 rule.Redirects.Add(newName);
             }
-            
-            //Add SharePoint Link Redirect
-            /*
-            - Spaces and the following characters /.= are converted to -
-            - The following characters are removed &?':",%#~*
-            - Everything is lowercase
-            - Multiple instances of - are converted to a single -
-            */
-            permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-–_()’＂@+";
-            var spNewName = new string(
-                name.Replace(' ', '-').Replace('/', '-').Replace('.','-').Replace('=', '-')
-                    .ToLower()
-                    .ToCharArray()
-                    .Where(c => permittedCharacters.Contains(c))
-                    .ToArray());
-            spNewName = Regex.Replace(spNewName, "-{2,}", "-").Trim('-');
 
+            //Add SharePoint Link Redirect
+            var spNewName = name.ToSharePointUri();
             if(spNewName != gatsbyUri)
             {
                 rule.Redirects.Add(spNewName);
             }
             
             return gatsbyUri;
+        }
+
+        public static string ToSharePointUri(this string name)
+        {
+            /*
+            - Spaces and the following characters /.= are converted to -
+            - The following characters are removed &?':",%#~*
+            - Everything is lowercase
+            - Multiple instances of - are converted to a single -
+            */
+            string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-–_()’＂@+";
+            var spNewName = new string(
+                name.Replace(' ', '-').Replace('/', '-').Replace('.', '-').Replace('=', '-')
+                    .ToLower()
+                    .ToCharArray()
+                    .Where(c => permittedCharacters.Contains(c))
+                    .ToArray());
+            spNewName = Regex.Replace(spNewName, "-{2,}", "-").Trim('-');
+            return spNewName;
         }
 
         public static string ToMarkdown(this ContentVersion contentVersion, RulePage rulePage)
