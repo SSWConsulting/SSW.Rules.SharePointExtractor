@@ -93,24 +93,30 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
 
         private void LoadUrlTerms(SpRulesDataSet dataSet, ClientContext ctx)
         {           
-            //var targetUrl = ""; //This is the URL to the .aspx page
+            var targetUrl = ""; //This is the URL to the .aspx page
             var friendlyUrl = "";
             foreach(var term in _termColl)
             {
                 term.LocalCustomProperties.TryGetValue("_Sys_Nav_FriendlyUrlSegment", out friendlyUrl);
-                //term.LocalCustomProperties.TryGetValue("_Sys_Nav_TargetUrl", out targetUrl);
-                
-                foreach (RulePage rulePage in dataSet.Rules.Where(r => r.Title.Equals(term.Name) || r.Name.Equals(term.Name.ToLower().Replace(' ','-'))))
-                {
-                    //if (!String.IsNullOrEmpty(targetUrl))
-                    //{
-                    //    targetUrl = targetUrl.Replace("~sitecollection/Pages/", "").Replace(".aspx", "");
-                    //    rulePage.Redirects.Add(targetUrl);
-                    //}
+                term.LocalCustomProperties.TryGetValue("_Sys_Nav_TargetUrl", out targetUrl);
 
+                if (!String.IsNullOrEmpty(targetUrl))
+                {
+                    targetUrl = targetUrl.Replace("~sitecollection/Pages/", "");
+                }
+               
+                foreach (RulePage rulePage in dataSet.Rules.Where(r => r.Title.Equals(term.Name) || r.Name.Equals(term.Name.ToLower().Replace(' ','-')) || r.FileName.Equals(targetUrl)))
+                {
                     if(!String.IsNullOrEmpty(friendlyUrl))
                     {
+                        //If the rule page matches the term and there is an avaible value for the friendly URL, add it to the redirects.
                         rulePage.Redirects.Add(friendlyUrl);
+                    }
+
+                    if(!String.IsNullOrEmpty(term.Name) && (!rulePage.Name.ToSharePointUri().Equals(term.Name.ToSharePointUri())))
+                    {
+                        //Sometimes we won't have a friendly URL and we need to calculate a URL from the term name.
+                        rulePage.Redirects.Add(term.Name.ToSharePointUri());
                     }
                 }
             }
@@ -318,7 +324,8 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 RulesKeyWords = item["RulesKeyWords"]?.ToString(),
                 CreatedUtc = (DateTime)item["Created"],
                 ModifiedUtc = (DateTime)item["Modified"],
-                Guid = item["GUID"].ToString()
+                Guid = item["GUID"].ToString(),
+                FileName = item["FileLeafRef"].ToString()
             };
 
             
