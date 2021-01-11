@@ -192,6 +192,96 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             return result;
         }
 
+        public static string ReplaceDlTagsWithImageFigures(string html)
+        {
+            string result = html;
+            
+            if (html.Contains("<dl"))
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(result);
+
+                foreach (var item in doc.DocumentNode.SelectNodes("//dl"))
+                {
+                    var className = item.Attributes["class"]?.Value;
+                    var figureType = "";
+                    var imgSrc = "";
+                    var figCaption = "";
+
+                    if (className?.IndexOf("badImage", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        figureType = "badImage";
+                    } else if (className?.IndexOf("goodImage", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        figureType = "goodImage";
+                    } else if(className?.IndexOf("image", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        figureType = "image";
+                    }
+
+                    if (figureType != "")
+                    {
+                        try
+                        {
+                            //Item - get dt node (Image source)
+                            var itemDt = item.SelectNodes("//dt");
+                            if (itemDt != null)
+                            {
+                                var itemImg = itemDt.First().SelectNodes("//img");
+                                if(itemImg != null)
+                                {
+                                    imgSrc = itemImg.First().GetAttributeValue("src", "");
+                                }
+                            }
+
+                            //Item - get dd node (Figcaption)
+                            var itemDd = item.SelectNodes("//dd");
+                            if (itemDd != null)
+                            {
+                                //TODO: Check that this is the correct one
+                                figCaption = itemDd.First().InnerText.Trim();
+                            } else
+                            {
+                                //Check the dt node for the Figure Text
+                                figCaption = item.InnerText.Trim();
+                            }
+
+                            if(imgSrc != "")
+                            {
+                                if(figureType == "image")
+                                {
+                                    if (figCaption.ToLower().Contains("Good Example"))
+                                    {
+                                        figureType = "goodImage";
+
+                                    } else if(figCaption.ToLower().Contains("Bad Example"))
+                                    {
+                                        figureType = "badImage";
+                                    } else
+                                    {
+                                        figureType = "";
+                                    }
+                                }
+
+                                var imageFigure = ImageFigure.Create(figureType, figCaption, imgSrc);
+                                var newNode = HtmlNode.CreateNode(imageFigure);
+
+                                item.ParentNode.InsertBefore(newNode, item);
+                                item.Remove();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            //TODO: Log Error
+                            var t = "error";
+                        }
+                    }
+                }
+                return doc.DocumentNode.OuterHtml;
+            }
+            return result;
+        }
+
         public static HtmlNodeCollection GetNodesWithTagAndAttribute(string content, string htmlTag, string attr, string attrValue)
         {
             var doc = new HtmlDocument();

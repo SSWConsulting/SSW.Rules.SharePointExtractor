@@ -16,14 +16,14 @@ namespace SSW.Rules.SharePointExtractor.Converter
             string result = markdown;
 
             //Add line breaks to Markdown text
-            result = CleanFigureMarkdown(result);
+            //result = CleanFigureMarkdown(result);
             result = ReplaceHtmlLineBreaks(result);
             result = FixMultilineFigures(result);
 
             //Fix images and figures
             result = RemoveExternalLinkImages(result);
-            result = MarkdownImages.RemoveAltIfNoFigure(result);
-            result = MarkdownImages.FixFigures(result);
+            //result = MarkdownImages.RemoveAltIfNoFigure(result);
+            //result = MarkdownImages.FixFigures(result);
 
             //Tidy up Markdown
             result = result.Replace("<this is=\"\" as=\"\" per=\"\" the=\"\" rule=\"\"></this>", "< This is as per the rule ");

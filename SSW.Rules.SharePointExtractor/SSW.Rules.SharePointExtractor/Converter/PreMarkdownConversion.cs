@@ -11,18 +11,6 @@ namespace SSW.Rules.SharePointExtractor.Converter
             string result = html.Replace("\u200B", "").Replace("&nbsp;", " ");
             result = result.Replace("size=\"+0\"","");
             result = result.Replace("<s>", "~~").Replace("</s>", "~~");
-
-            result = result.Replace("<title>", "&lt;title&gt;");
-            result = result.Replace("<option>", "&lt;option&gt;");
-            result = result.Replace("</option>", "&lt;/option&gt;");
-            result = result.Replace("<label>", "&lt;label&gt;");
-            result = result.Replace("</label>", "&lt;/label&gt;");
-            result = result.Replace("<fieldset>", "&lt;fieldset&gt;");
-            result = result.Replace("</fieldset>", "&lt;/fieldset&gt;");
-            result = result.Replace("<CollectionUrl>", "&lt;CollectionUrl&gt;");
-            result = result.Replace("<yourname>", "&lt;yourname&gt;");
-            result = result.Replace("<yourdomain>", "&lt;yourdomain&gt;");
-            result = result.Replace("<Agent’s name>", "&lt;Agent’s name&gt;");
            
             //Convert Span Highlights
             result = HtmlSpan.Process(result);
@@ -32,7 +20,7 @@ namespace SSW.Rules.SharePointExtractor.Converter
             result = Greybox.Process(result);
 
             //Remove unhandled tags
-            //result = HtmlDescriptionList.Process(result);
+            result = HtmlDescriptionList.Process(result);
             result = HtmlDescriptionDetails.Process(result);
 
             result = HtmlHelper.ReplaceHtmlWithTag(result, "dl");

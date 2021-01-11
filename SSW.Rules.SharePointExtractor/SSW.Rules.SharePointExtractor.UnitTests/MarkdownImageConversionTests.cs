@@ -8,6 +8,27 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
     public class MarkdownImageConversionTests
     {
         [Fact]
+        public void ConvertDlImageFigure()
+        {
+            string figureHtml = @"<b>test</b>
+                <div></div>
+                <dl class=""image""> 
+                   <dt> 
+                      <img src = ""ProjectManagementSummary_Small.jpg"" border=""0"" alt="""" style=""margin: 5px; width: 600px; height: 461px;""/>
+                   </dt> 
+                   <dd>Figure: Classic stories of Project Management</dd> 
+                </dl>
+                <h4>heading</h4>
+                <p>text</p>";
+            string converted = HtmlHelper.ReplaceDlTagsWithImageFigures(figureHtml);
+            converted.Should().Be(@"<b>test</b>
+                <div></div>
+                ![Figure: Classic stories of Project Management](ProjectManagementSummary_Small.jpg)  
+                <h4>heading</h4>
+                <p>text</p>");
+        }
+
+        [Fact]
         public void ConvertImageWithoutFigureOrAltText()
         {
             string test = "![](image.png)";

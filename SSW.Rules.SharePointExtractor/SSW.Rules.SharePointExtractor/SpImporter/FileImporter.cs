@@ -29,7 +29,8 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
             using (var reader = new StreamReader(_filePath))
             {
                 var json = reader.ReadToEnd();
-                return JsonConvert.DeserializeObject<SpRulesDataSet>(json, new JsonSerializerSettings() { PreserveReferencesHandling = PreserveReferencesHandling.Objects });
+                json = Helpers.EncodedHtmlTags.Encode(json);
+                return JsonConvert.DeserializeObject<SpRulesDataSet>(json, new JsonSerializerSettings() {PreserveReferencesHandling = PreserveReferencesHandling.Objects });
             }
         }
     }

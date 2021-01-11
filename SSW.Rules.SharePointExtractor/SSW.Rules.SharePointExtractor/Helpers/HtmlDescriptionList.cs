@@ -13,6 +13,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
         {
             string result = html;
 
+            result = HtmlHelper.ReplaceDlTagsWithImageFigures(result);
             //Clean HTML
             /*
             result = result.Replace("<dl class='image'>", "");
