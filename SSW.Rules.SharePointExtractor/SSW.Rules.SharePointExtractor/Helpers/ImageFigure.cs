@@ -11,16 +11,15 @@ namespace SSW.Rules.SharePointExtractor.Helpers
     {
         public static string Create(string type, string figCaption, string imgSrc)
         {
-            //TODO: Fix line breaks
             var imageFigure = "";
 
             if (String.IsNullOrEmpty(type)) {
-                imageFigure = "![" + figCaption + "](" + imgSrc + ")  ";
+                imageFigure = "![" + figCaption + "](" + imgSrc + ")  <br>";
             } else {
-                imageFigure = "  ";
-                imageFigure += "::: " + type + "  ";
-                imageFigure += "![" + figCaption + "](" + imgSrc + ")  ";
-                imageFigure += ":::   ";
+                imageFigure = "<br>";
+                imageFigure += "::: " + type + "  <br>";
+                imageFigure += "![" + figCaption + "](" + imgSrc + ")  <br>";
+                imageFigure += ":::  <br>";
             }
 
             return imageFigure;

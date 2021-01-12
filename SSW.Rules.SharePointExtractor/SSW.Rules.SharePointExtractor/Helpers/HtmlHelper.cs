@@ -210,13 +210,13 @@ namespace SSW.Rules.SharePointExtractor.Helpers
 
                     if (className?.IndexOf("badImage", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        figureType = "badImage";
+                        figureType = "bad";
                     } else if (className?.IndexOf("goodImage", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        figureType = "goodImage";
+                        figureType = "good";
                     } else if(className?.IndexOf("image", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
-                        figureType = "image";
+                        figureType = "ok";
                     }
 
                     if (figureType != "")
@@ -235,7 +235,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
                             }
 
                             //Item - get dd node (Figcaption)
-                            var itemDd = item.SelectNodes("//dd");
+                            var itemDd = item.SelectNodes("//dt/dd");
                             if (itemDd != null)
                             {
                                 //TODO: Check that this is the correct one
@@ -248,24 +248,30 @@ namespace SSW.Rules.SharePointExtractor.Helpers
 
                             if(imgSrc != "")
                             {
-                                if(figureType == "image")
+                                if(figureType == "ok")
                                 {
-                                    if (figCaption.ToLower().Contains("Good Example"))
+                                    if (figCaption.ToLower().Contains("figure: good example"))
                                     {
-                                        figureType = "goodImage";
+                                        figureType = "good";
 
-                                    } else if(figCaption.ToLower().Contains("Bad Example"))
+                                    } else if(figCaption.ToLower().Contains("figure: bad example"))
                                     {
-                                        figureType = "badImage";
+                                        figureType = "bad";
                                     } else
                                     {
-                                        figureType = "";
+                                        figureType = "ok";
                                     }
                                 }
 
-                                var imageFigure = ImageFigure.Create(figureType, figCaption, imgSrc);
-                                var newNode = HtmlNode.CreateNode(imageFigure);
+                                if(imgSrc == "BeforeCoding.jpg")
+                                {
+                                    var t = "";
+                                }
 
+                                var imageFigure = ImageFigure.Create(figureType, figCaption, imgSrc);
+                                imageFigure = imageFigure.Replace("<br>", "{brHTML}");
+
+                                var newNode = HtmlNode.CreateNode(imageFigure);
                                 item.ParentNode.InsertBefore(newNode, item);
                                 item.Remove();
                             }
@@ -277,7 +283,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
                         }
                     }
                 }
-                return doc.DocumentNode.OuterHtml;
+                return doc.DocumentNode.OuterHtml.Replace("{brHTML}","<br>");
             }
             return result;
         }
