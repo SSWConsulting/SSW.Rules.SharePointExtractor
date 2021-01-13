@@ -22,7 +22,7 @@ namespace SSW.Rules.SharePointExtractor.Converter
 
             //Fix images and figures
             result = RemoveExternalLinkImages(result);
-            //result = MarkdownImages.RemoveAltIfNoFigure(result);
+            result = MarkdownImages.RemoveAltIfFilename(result);
             //result = MarkdownImages.FixFigures(result);
 
             //Tidy up Markdown

@@ -9,6 +9,14 @@ namespace SSW.Rules.SharePointExtractor.Helpers
 {
     public class MarkdownImages
     {
+        public static string RemoveAltIfFilename(string result)
+        {
+            //Find all Markdown images and remove alt text if the text is the same as the image filename
+            MatchEvaluator removeAltEvaluator = new MatchEvaluator(RemoveAltIfFilenameEvaluator);
+            result = Regex.Replace(result, @"\!\[[^\]]+\]\([^\)]+\)", removeAltEvaluator);
+            return result;
+        }
+
         public static string RemoveAltIfNoFigure(string result)
         {
             //remove alt text if no figure - See Tests for examples
@@ -95,6 +103,30 @@ namespace SSW.Rules.SharePointExtractor.Helpers
 
                 }
                 return result;
+            }
+            else
+            {
+                return match.Value;
+            }
+        }
+
+        private static string RemoveAltIfFilenameEvaluator(Match match)
+        {
+            string result;
+            String[] separatorFile = { "](" };
+            var imgInfo = match.Value.Split(separatorFile, StringSplitOptions.RemoveEmptyEntries);
+            if (imgInfo.Length > 1)
+            {
+                var alt = imgInfo[0].Substring(2);
+                var src = imgInfo[1].Remove(imgInfo[1].Length - 1);
+                if (alt.Equals(src))
+                {
+                    result = "![](" + imgInfo[1];
+                    return result;
+                } else
+                {
+                    return match.Value;
+                }
             }
             else
             {

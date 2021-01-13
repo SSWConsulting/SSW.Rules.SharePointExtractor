@@ -19,7 +19,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
                 imageFigure = "<br>";
                 imageFigure += "::: " + type + "  <br>";
                 imageFigure += "![" + figCaption + "](" + imgSrc + ")  <br>";
-                imageFigure += ":::  <br>";
+                imageFigure += ":::<br>";
             }
 
             return imageFigure;

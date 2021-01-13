@@ -238,7 +238,6 @@ namespace SSW.Rules.SharePointExtractor.Helpers
                             var itemDd = item.SelectNodes("//dt/dd");
                             if (itemDd != null)
                             {
-                                //TODO: Check that this is the correct one
                                 figCaption = itemDd.First().InnerText.Trim();
                             } else
                             {
@@ -261,11 +260,6 @@ namespace SSW.Rules.SharePointExtractor.Helpers
                                     {
                                         figureType = "ok";
                                     }
-                                }
-
-                                if(imgSrc == "BeforeCoding.jpg")
-                                {
-                                    var t = "";
                                 }
 
                                 var imageFigure = ImageFigure.Create(figureType, figCaption, imgSrc);
