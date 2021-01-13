@@ -278,6 +278,94 @@ namespace SSW.Rules.SharePointExtractor.Helpers
                     }
                 }
                 return doc.DocumentNode.OuterHtml.Replace("{brHTML}","<br>");
+			}
+			return result;
+		}
+
+        public static string ReplaceDlTagsWithGreyBox(string html)
+        {
+            string result = html;
+
+            if (html.Contains("<dl class"))
+            {
+                var doc = new HtmlDocument();
+                doc.LoadHtml(result);
+
+                foreach (var item in doc.DocumentNode.SelectNodes("//dl"))
+                {
+                    var className = item.Attributes["class"]?.Value;
+                    var figureType = "";
+                    var content = "";
+                    var figCaption = "";
+
+                    if (className.Equals("bad"))
+                    {
+                        figureType = "bad";
+                    }
+                    else if (className.Equals("good"))
+                    {
+                        figureType = "good";
+                    } else
+                    {
+                        continue;
+                    }
+
+                    if (figureType != "")
+                    {
+                        try
+                        {
+                            //Item - get dt node (Image source)
+                            var itemDt = item.SelectNodes("//dt");
+                            if (itemDt != null)
+                            {
+                                content = itemDt.First().InnerHtml;
+                            }
+
+                            //Item - get dd node (Figcaption)
+                            var itemDd = item.SelectNodes("//dl/dd");
+                            if (itemDd != null)
+                            {
+                                figCaption = itemDd.First().InnerText.Trim();
+                            }
+
+                            if (content != "")
+                            {
+                                var example = FencedBlocks.Create(content, "greybox");
+                                if(figCaption != "")
+                                {
+                                    example += FencedBlocks.Create(figCaption, figureType);
+                                }
+                                example = example.Replace("<", "{ltHTML}").Replace(">","{gtHTML}");
+
+                                var newNode = HtmlNode.CreateNode(example);
+                                item.ParentNode.InsertBefore(newNode, item);
+                                item.Remove();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            //TODO: Log Error
+                            var t = "error";
+                        }
+                    }
+                }
+                return doc.DocumentNode.OuterHtml.Replace("{ltHTML}", "<").Replace("{gtHTML}", ">");
+            }
+            return result;
+        }
+
+        public static string ReplaceHtmlWithCodeBlock(string html, string oldHtmlTag, string oldClassName, string type)
+        {
+            string result = html;
+            var nodes = HtmlHelper.GetNodesWithTagAndClassName(html, oldHtmlTag, oldClassName);
+
+            foreach (var node in nodes)
+            {
+                if (!string.IsNullOrEmpty(node.OuterHtml))
+                {
+                    result = result.Replace(node.OuterHtml,
+                        CodeBlocks.Create(node.InnerHtml.Trim(' '), type));
+                }
             }
             return result;
         }

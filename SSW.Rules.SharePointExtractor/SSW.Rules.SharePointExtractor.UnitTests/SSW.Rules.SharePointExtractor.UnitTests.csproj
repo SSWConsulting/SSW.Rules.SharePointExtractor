@@ -103,6 +103,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigTests.cs" />
+    <Compile Include="MarkdownRuleConversionTests.cs" />
     <Compile Include="MarkdownFigureConversionTests.cs" />
     <Compile Include="MarkdownImageConversionTests.cs" />
     <Compile Include="WebPartServiceTests.cs" />

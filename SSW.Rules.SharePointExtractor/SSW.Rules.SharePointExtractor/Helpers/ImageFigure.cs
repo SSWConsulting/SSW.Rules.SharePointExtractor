@@ -16,7 +16,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             if (String.IsNullOrEmpty(type)) {
                 imageFigure = "![" + figCaption + "](" + imgSrc + ")  <br>";
             } else {
-                imageFigure = "<br>";
+                imageFigure = "<br><br>";
                 imageFigure += "::: " + type + "  <br>";
                 imageFigure += "![" + figCaption + "](" + imgSrc + ")  <br>";
                 imageFigure += ":::<br>";

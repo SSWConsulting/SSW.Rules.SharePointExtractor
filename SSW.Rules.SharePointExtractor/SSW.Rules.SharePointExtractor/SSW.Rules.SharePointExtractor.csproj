@@ -178,6 +178,7 @@
     <Compile Include="Converter\PreMarkdownConversion.cs" />
     <Compile Include="Helpers\EncodedHtmlTags.cs" />
     <Compile Include="Helpers\ImageFigure.cs" />
+    <Compile Include="Helpers\CodeBlocks.cs" />
     <Compile Include="Helpers\HtmlDescriptionDetails.cs" />
     <Compile Include="Helpers\HtmlFont.cs" />
     <Compile Include="Helpers\HtmlDescriptionList.cs" />
