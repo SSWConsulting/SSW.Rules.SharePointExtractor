@@ -29,6 +29,11 @@ namespace SSW.Rules.SharePointExtractor.Converter
             result = result.Replace("<this is=\"\" as=\"\" per=\"\" the=\"\" rule=\"\"></this>", "< This is as per the rule ");
             result = result.Replace("<this email=\"\" was=\"\" sent=\"\" as=\"\" per=\"\"></this>", "< This email was sent as per ");
 
+            result = HtmlHelper.RemoveNode(result, "dl", true);
+            result = HtmlHelper.RemoveNode(result, "dt", true);
+            result = HtmlHelper.RemoveNode(result, "dt", true);
+            result = result.Replace("<br>", Environment.NewLine);
+
             //This endintro marker is for showing the rule blurb on the category page
             result = result.Replace("<excerpt class='endintro'></excerpt>", "<!--endintro-->");
             return result;

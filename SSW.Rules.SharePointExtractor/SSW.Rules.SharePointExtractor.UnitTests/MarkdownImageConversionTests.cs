@@ -29,6 +29,14 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
         }
 
         [Fact]
+        public void RemoveDlTags()
+        {
+            string dlFigure = @"<dl class=""image""><br><br>::: good  <br>![Figure: Good example - a 5x scaled paper plane icon added to a Web Application](18-06-2014 2-33-45 PM.png)  <br>:::<br></dl>";
+            string converted = HtmlHelper.RemoveNode(dlFigure, "dl", true);
+            converted.Should().Be(@"<br><br>::: good  <br>![Figure: Good example - a 5x scaled paper plane icon added to a Web Application](18-06-2014 2-33-45 PM.png)  <br>:::<br>");
+        }
+
+        [Fact]
         public void ConvertImageWithoutFigureOrAltText()
         {
             string test = "![](image.png)";

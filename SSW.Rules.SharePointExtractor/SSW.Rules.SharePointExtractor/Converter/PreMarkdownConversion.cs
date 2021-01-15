@@ -36,6 +36,8 @@ namespace SSW.Rules.SharePointExtractor.Converter
             //Remove leading and trailing whitespace
             result = TrimWhitespaceAroundBoldText(result);
 
+            result = HtmlHelper.RemoveNode(result, "dl", true);
+
             return result;
         }
 
