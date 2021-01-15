@@ -8,24 +8,24 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
     public class MarkdownImageConversionTests
     {
         [Fact]
+        public void FigureImagesRemoveDl()
+        {
+            string dl = @"This will help to solidify the changes and alleviate confusion.
+<dl class=""image""><br><br>::: ok<br>![Figure: Explaining the change that has been made using the prefix ""UPDATE:"". Using brackets is also an option](AppointmentWithComments.jpg)  <br>:::<br></dl>
+### Related Rule";
+
+            var converted = HtmlHelper.RemoveNode(dl, "dl", true);
+            converted.Should().Be(@"This will help to solidify the changes and alleviate confusion.
+<br><br>::: ok<br>![Figure: Explaining the change that has been made using the prefix ""UPDATE:"". Using brackets is also an option](AppointmentWithComments.jpg)  <br>:::<br>
+### Related Rule");
+        }
+
+[Fact]
         public void ConvertDlImageFigure()
         {
-            string figureHtml = @"<b>test</b>
-                <div></div>
-                <dl class=""image""> 
-                   <dt> 
-                      <img src = ""ProjectManagementSummary_Small.jpg"" border=""0"" alt="""" style=""margin: 5px; width: 600px; height: 461px;""/>
-                   </dt> 
-                   <dd>Figure: Classic stories of Project Management</dd> 
-                </dl>
-                <h4>heading</h4>
-                <p>text</p>";
+            string figureHtml = @"<dl class=""image""><dt><img src = ""image.jpg""/></dt><dd>Figure: text</dd></dl>";
             string converted = HtmlHelper.ReplaceDlTagsWithImageFigures(figureHtml);
-            converted.Should().Be(@"<b>test</b>
-                <div></div>
-                ![Figure: Classic stories of Project Management](ProjectManagementSummary_Small.jpg)  
-                <h4>heading</h4>
-                <p>text</p>");
+            converted.Should().Be(@"<dl class=""image""><br><br>::: ok  <br>![Figure: text](image.jpg)  <br>:::<br></dl>");
         }
 
         [Fact]

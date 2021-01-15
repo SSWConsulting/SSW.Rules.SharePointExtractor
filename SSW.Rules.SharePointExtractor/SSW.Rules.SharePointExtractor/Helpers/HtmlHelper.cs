@@ -111,7 +111,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             return result;
         }
 
-        public static string EscapeTagsInPre(string html)
+        public static string ConvertTagsInPre(string html)
         {
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
@@ -119,8 +119,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             if (htmlNodes != null) { 
             foreach(var node in htmlNodes)
             {
-                node.InnerHtml = node.InnerHtml.Replace("<", "&lt;");
-                node.InnerHtml = node.InnerHtml.Replace("<", "&gt;");
+                node.InnerHtml = node.InnerHtml.Replace("<br>", Environment.NewLine);
             }
             }
             return doc.DocumentNode.InnerHtml;
@@ -192,88 +191,164 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             return result;
         }
 
+        public static string RemoveNode(string html, string htmlTag, bool keepChildren)
+        {
+            string result = html;
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(result);
+
+            var nodeList = doc.DocumentNode.SelectNodes(htmlTag);
+
+            if(nodeList != null)
+            {
+                foreach (var node in nodeList)
+                {
+                    doc.DocumentNode.RemoveChild(node, keepChildren);
+                }
+
+                return doc.DocumentNode.OuterHtml;
+            }
+            return html;
+        }
+
         public static string ReplaceDlTagsWithImageFigures(string html)
         {
             string result = html;
             
+            //Do a quick search for dl tags
             if (html.Contains("<dl"))
             {
                 var doc = new HtmlDocument();
                 doc.LoadHtml(result);
 
-                foreach (var item in doc.DocumentNode.SelectNodes("//dl"))
+                foreach (var dlNode in doc.DocumentNode.SelectNodes("//dl"))
                 {
-                    var className = item.Attributes["class"]?.Value;
+                    //If we can't find any img nodes, then ignore the <dl>
+                    var imageNodes = dlNode.SelectNodes("//dl//dt//img");
+                    if(imageNodes == null)
+                    {
+                        continue;
+                    }
+
+                    var dlClassName = dlNode.Attributes["class"]?.Value;
                     var figureType = "";
                     var imgSrc = "";
                     var figCaption = "";
 
-                    if (className?.IndexOf("badImage", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
+                    if (dlClassName?.IndexOf("badImage", StringComparison.OrdinalIgnoreCase) >= 0) {
                         figureType = "bad";
-                    } else if (className?.IndexOf("goodImage", StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
+                    }
+                    else if (dlClassName?.IndexOf("goodImage", StringComparison.OrdinalIgnoreCase) >= 0) {
                         figureType = "good";
-                    } else if(className?.IndexOf("image", StringComparison.OrdinalIgnoreCase) >= 0)
+                    }
+                    else if (dlClassName?.IndexOf("image", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         figureType = "ok";
                     }
 
                     if (figureType != "")
                     {
-                        try
+                        var xpathsToRemove = new List<string>();
+                        var nodesToAdd = new Dictionary<HtmlNode, HtmlNode>(); 
+                        //Go through the <dl> node by node
+                        foreach (var node in dlNode.ChildNodes)
                         {
-                            //Item - get dt node (Image source)
-                            var itemDt = item.SelectNodes("//dt");
-                            if (itemDt != null)
+                            if (node.Name.Equals("dt"))
                             {
-                                var itemImg = itemDt.First().SelectNodes("//img");
-                                if(itemImg != null)
+                                //Check if this is an image node, then process it
+                                //Get the img node (Image source)
+                                var imgNode = node.SelectSingleNode("img");
+                                if (imgNode != null)
                                 {
-                                    imgSrc = itemImg.First().GetAttributeValue("src", "");
-                                }
-                            }
+                                    imgSrc = imgNode.GetAttributeValue("src", "");
 
-                            //Item - get dd node (Figcaption)
-                            var itemDd = item.SelectNodes("//dt/dd");
-                            if (itemDd != null)
-                            {
-                                figCaption = itemDd.First().InnerText.Trim();
-                            } else
-                            {
-                                //Check the dt node for the Figure Text
-                                figCaption = item.InnerText.Trim();
-                            }
+                                    //Get the related dd node (Figcaption) (next sibling)
+                                    HtmlNode sibling = node.NextSibling;
+                                    HtmlNode ddNode = null;
+                                    bool nextImageFound = false;
+                                    while (sibling != null && ddNode == null && nextImageFound == false)
+                                    {
+                                        if (sibling.NodeType == HtmlNodeType.Element)
+                                        {
+                                            if (sibling.Name.Equals("dt"))
+                                            {
+                                                //We found another image
+                                                nextImageFound = true;
+                                            }
 
-                            if(imgSrc != "")
-                            {
-                                if(figureType == "ok")
-                                {
-                                    if (figCaption.ToLower().Contains("figure: good example"))
-                                    {
-                                        figureType = "good";
+                                            if (sibling.Name.Equals("dd"))
+                                            {
+                                                ddNode = sibling;
+                                            }
+                                        }
+                                        sibling = sibling.NextSibling;
+                                    }
 
-                                    } else if(figCaption.ToLower().Contains("figure: bad example"))
+                                    if (ddNode != null)
                                     {
-                                        figureType = "bad";
-                                    } else
+                                        figCaption = ddNode.InnerText.Trim();
+                                    }
+                                    else
                                     {
-                                        figureType = "ok";
+                                        //Check the dt node for the Figure Text
+                                        figCaption = imgNode.InnerText.Trim();
+                                    }
+
+                                    if (imgSrc != "")
+                                    {
+                                        if (figureType == "ok")
+                                        {
+                                            if (figCaption.ToLower().Contains("figure: good example"))
+                                            {
+                                                figureType = "good";
+
+                                            }
+                                            else if (figCaption.ToLower().Contains("figure: bad example"))
+                                            {
+                                                figureType = "bad";
+                                            }
+                                            else
+                                            {
+                                                figureType = "ok";
+                                            }
+                                        }
+
+                                        var imageFigure = ImageFigure.Create(figureType, figCaption, imgSrc);
+                                        imageFigure = imageFigure.Replace("<br>", "{brHTML}");
+
+                                        var newNode = HtmlNode.CreateNode(imageFigure);
+                                        nodesToAdd.Add(node, newNode);
+
+                                        xpathsToRemove.Add(node.XPath);
+
+                                        if(ddNode != null)
+                                        {
+                                            xpathsToRemove.Add(ddNode.XPath);
+                                        }
                                     }
                                 }
-
-                                var imageFigure = ImageFigure.Create(figureType, figCaption, imgSrc);
-                                imageFigure = imageFigure.Replace("<br>", "{brHTML}");
-
-                                var newNode = HtmlNode.CreateNode(imageFigure);
-                                item.ParentNode.InsertBefore(newNode, item);
-                                item.Remove();
+                            }
+                            else
+                            {
+                                //If it's anything else, then ignore it
                             }
                         }
-                        catch (Exception ex)
+
+                        foreach(var nodePair in nodesToAdd)
                         {
-                            //TODO: Log Error
-                            var t = "error";
+                            var node = nodePair.Key;
+                            node.ParentNode.InsertAfter(nodePair.Value, node);
+                        }
+
+                        foreach (string xpath in xpathsToRemove)
+                        {
+                            var node = doc.DocumentNode.SelectSingleNode(xpath);
+
+                            if (node != null)
+                            {
+                                node.Remove();
+                            }
                         }
                     }
                 }
@@ -281,78 +356,6 @@ namespace SSW.Rules.SharePointExtractor.Helpers
 			}
 			return result;
 		}
-
-        public static string ReplaceDlTagsWithGreyBox(string html)
-        {
-            string result = html;
-
-            if (html.Contains("<dl class"))
-            {
-                var doc = new HtmlDocument();
-                doc.LoadHtml(result);
-
-                foreach (var item in doc.DocumentNode.SelectNodes("//dl"))
-                {
-                    var className = item.Attributes["class"]?.Value;
-                    var figureType = "";
-                    var content = "";
-                    var figCaption = "";
-
-                    if (className.Equals("bad"))
-                    {
-                        figureType = "bad";
-                    }
-                    else if (className.Equals("good"))
-                    {
-                        figureType = "good";
-                    } else
-                    {
-                        continue;
-                    }
-
-                    if (figureType != "")
-                    {
-                        try
-                        {
-                            //Item - get dt node (Image source)
-                            var itemDt = item.SelectNodes("//dt");
-                            if (itemDt != null)
-                            {
-                                content = itemDt.First().InnerHtml;
-                            }
-
-                            //Item - get dd node (Figcaption)
-                            var itemDd = item.SelectNodes("//dl/dd");
-                            if (itemDd != null)
-                            {
-                                figCaption = itemDd.First().InnerText.Trim();
-                            }
-
-                            if (content != "")
-                            {
-                                var example = FencedBlocks.Create(content, "greybox");
-                                if(figCaption != "")
-                                {
-                                    example += FencedBlocks.Create(figCaption, figureType);
-                                }
-                                example = example.Replace("<", "{ltHTML}").Replace(">","{gtHTML}");
-
-                                var newNode = HtmlNode.CreateNode(example);
-                                item.ParentNode.InsertBefore(newNode, item);
-                                item.Remove();
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            //TODO: Log Error
-                            var t = "error";
-                        }
-                    }
-                }
-                return doc.DocumentNode.OuterHtml.Replace("{ltHTML}", "<").Replace("{gtHTML}", ">");
-            }
-            return result;
-        }
 
         public static string ReplaceHtmlWithCodeBlock(string html, string oldHtmlTag, string oldClassName, string type)
         {
@@ -393,6 +396,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
 
             return result;
         }
+
         public static List<HtmlNode> GetNodesWithTag(HtmlDocument doc, string htmlTag)
         {
             var htmlNodes = doc.DocumentNode.SelectNodes("//" + htmlTag);

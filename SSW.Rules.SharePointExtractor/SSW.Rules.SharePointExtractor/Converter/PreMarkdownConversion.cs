@@ -1,4 +1,5 @@
 ﻿using SSW.Rules.SharePointExtractor.Helpers;
+using System;
 using System.Text.RegularExpressions;
 
 namespace SSW.Rules.SharePointExtractor.Converter
@@ -23,11 +24,12 @@ namespace SSW.Rules.SharePointExtractor.Converter
             result = HtmlDescriptionList.Process(result);
             result = HtmlDescriptionDetails.Process(result);
 
-            result = HtmlHelper.ReplaceHtmlWithTag(result, "dl");
-            result = HtmlHelper.ReplaceHtmlWithTag(result, "dt");
-            result = HtmlHelper.ReplaceHtmlWithTag(result, "dd");
-
-            result = HtmlHelper.EscapeTagsInPre(result);
+            //Remove nodes, but keep the child nodes
+            result = HtmlHelper.RemoveNode(result, "dl", true);
+            result = HtmlHelper.RemoveNode(result, "dt", true);
+            result = HtmlHelper.RemoveNode(result, "dd", true);
+            
+            result = HtmlHelper.ConvertTagsInPre(result);
 
             result = HtmlFont.Process(result);
 
