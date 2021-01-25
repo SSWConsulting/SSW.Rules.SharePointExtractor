@@ -15,7 +15,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
             Title = cat.Title;
             Guid = cat.PageGuid ?? cat.TermStoreGuid;
             Uri = cat.Name.ToFileName();
-            Index = cat.Rules.Select(r => r.Name.ToFileName()).ToList();
+            Index = cat.Rules.Select(r => r.GetRuleUri()).ToList();
         }
 
         public String Type => "category";
