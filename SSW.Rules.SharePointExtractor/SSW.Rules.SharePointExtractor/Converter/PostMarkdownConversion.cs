@@ -16,18 +16,23 @@ namespace SSW.Rules.SharePointExtractor.Converter
             string result = markdown;
 
             //Add line breaks to Markdown text
-            result = CleanFigureMarkdown(result);
+            //result = CleanFigureMarkdown(result);
             result = ReplaceHtmlLineBreaks(result);
             result = FixMultilineFigures(result);
 
             //Fix images and figures
             result = RemoveExternalLinkImages(result);
-            result = MarkdownImages.RemoveAltIfNoFigure(result);
-            result = MarkdownImages.FixFigures(result);
+            result = MarkdownImages.RemoveAltIfFilename(result);
+            //result = MarkdownImages.FixFigures(result);
 
             //Tidy up Markdown
             result = result.Replace("<this is=\"\" as=\"\" per=\"\" the=\"\" rule=\"\"></this>", "< This is as per the rule ");
             result = result.Replace("<this email=\"\" was=\"\" sent=\"\" as=\"\" per=\"\"></this>", "< This email was sent as per ");
+
+            result = HtmlHelper.RemoveNode(result, "dl", true);
+            result = HtmlHelper.RemoveNode(result, "dt", true);
+            result = HtmlHelper.RemoveNode(result, "dt", true);
+            result = result.Replace("<br>", Environment.NewLine);
 
             //This endintro marker is for showing the rule blurb on the category page
             result = result.Replace("<excerpt class='endintro'></excerpt>", "<!--endintro-->");

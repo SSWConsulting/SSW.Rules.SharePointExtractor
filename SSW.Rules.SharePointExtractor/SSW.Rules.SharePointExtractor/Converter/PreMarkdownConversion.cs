@@ -1,4 +1,5 @@
 ﻿using SSW.Rules.SharePointExtractor.Helpers;
+using System;
 using System.Text.RegularExpressions;
 
 namespace SSW.Rules.SharePointExtractor.Converter
@@ -11,18 +12,6 @@ namespace SSW.Rules.SharePointExtractor.Converter
             string result = html.Replace("\u200B", "").Replace("&nbsp;", " ");
             result = result.Replace("size=\"+0\"","");
             result = result.Replace("<s>", "~~").Replace("</s>", "~~");
-
-            result = result.Replace("<title>", "&lt;title&gt;");
-            result = result.Replace("<option>", "&lt;option&gt;");
-            result = result.Replace("</option>", "&lt;/option&gt;");
-            result = result.Replace("<label>", "&lt;label&gt;");
-            result = result.Replace("</label>", "&lt;/label&gt;");
-            result = result.Replace("<fieldset>", "&lt;fieldset&gt;");
-            result = result.Replace("</fieldset>", "&lt;/fieldset&gt;");
-            result = result.Replace("<CollectionUrl>", "&lt;CollectionUrl&gt;");
-            result = result.Replace("<yourname>", "&lt;yourname&gt;");
-            result = result.Replace("<yourdomain>", "&lt;yourdomain&gt;");
-            result = result.Replace("<Agent’s name>", "&lt;Agent’s name&gt;");
            
             //Convert Span Highlights
             result = HtmlSpan.Process(result);
@@ -34,10 +23,20 @@ namespace SSW.Rules.SharePointExtractor.Converter
             //Remove unhandled tags
             result = HtmlDescriptionList.Process(result);
             result = HtmlDescriptionDetails.Process(result);
+
+            //Remove nodes, but keep the child nodes
+            result = HtmlHelper.RemoveNode(result, "dl", true);
+            result = HtmlHelper.RemoveNode(result, "dt", true);
+            result = HtmlHelper.RemoveNode(result, "dd", true);
+            
+            result = HtmlHelper.ConvertTagsInPre(result);
+
             result = HtmlFont.Process(result);
 
             //Remove leading and trailing whitespace
             result = TrimWhitespaceAroundBoldText(result);
+
+            result = HtmlHelper.RemoveNode(result, "dl", true);
 
             return result;
         }

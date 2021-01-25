@@ -8,6 +8,35 @@ namespace SSW.Rules.SharePointExtractor.UnitTests
     public class MarkdownImageConversionTests
     {
         [Fact]
+        public void FigureImagesRemoveDl()
+        {
+            string dl = @"This will help to solidify the changes and alleviate confusion.
+<dl class=""image""><br><br>::: ok<br>![Figure: Explaining the change that has been made using the prefix ""UPDATE:"". Using brackets is also an option](AppointmentWithComments.jpg)  <br>:::<br></dl>
+### Related Rule";
+
+            var converted = HtmlHelper.RemoveNode(dl, "dl", true);
+            converted.Should().Be(@"This will help to solidify the changes and alleviate confusion.
+<br><br>::: ok<br>![Figure: Explaining the change that has been made using the prefix ""UPDATE:"". Using brackets is also an option](AppointmentWithComments.jpg)  <br>:::<br>
+### Related Rule");
+        }
+
+[Fact]
+        public void ConvertDlImageFigure()
+        {
+            string figureHtml = @"<dl class=""image""><dt><img src = ""image.jpg""/></dt><dd>Figure: text</dd></dl>";
+            string converted = HtmlHelper.ReplaceDlTagsWithImageFigures(figureHtml);
+            converted.Should().Be(@"<dl class=""image""><br><br>::: ok  <br>![Figure: text](image.jpg)  <br>:::<br></dl>");
+        }
+
+        [Fact]
+        public void RemoveDlTags()
+        {
+            string dlFigure = @"<dl class=""image""><br><br>::: good  <br>![Figure: Good example - a 5x scaled paper plane icon added to a Web Application](18-06-2014 2-33-45 PM.png)  <br>:::<br></dl>";
+            string converted = HtmlHelper.RemoveNode(dlFigure, "dl", true);
+            converted.Should().Be(@"<br><br>::: good  <br>![Figure: Good example - a 5x scaled paper plane icon added to a Web Application](18-06-2014 2-33-45 PM.png)  <br>:::<br>");
+        }
+
+        [Fact]
         public void ConvertImageWithoutFigureOrAltText()
         {
             string test = "![](image.png)";

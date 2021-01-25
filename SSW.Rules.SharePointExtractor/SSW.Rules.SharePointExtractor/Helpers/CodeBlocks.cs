@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace SSW.Rules.SharePointExtractor.Helpers
 {
-    public class FencedBlocks
+    public class CodeBlocks
     {
         public static string Create(string content, string type)
         {
-            var fencedBlock = "<br><br>::: " + type + "<br>";
-            fencedBlock += content.Trim() + "  <br>";
-            fencedBlock += ":::<br>";
+            var fencedBlock = "<br><pre>";
+            fencedBlock += content.Replace("<br>", Environment.NewLine);
+            fencedBlock += "<br></pre><br>";
             return fencedBlock;
         }
     }

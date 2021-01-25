@@ -200,6 +200,16 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             // process rules
             foreach (var rule in data.Rules)
             {
+                if (!String.IsNullOrEmpty(rule.IntroText))
+                {
+                    rule.IntroText = Helpers.EncodedHtmlTags.Decode(rule.IntroText);
+                }
+
+                if (!String.IsNullOrEmpty(rule.Content))
+                {
+                    rule.Content = Helpers.EncodedHtmlTags.Decode(rule.Content);
+                }
+                
                 WriteRule(rule);
             }
         }
@@ -701,11 +711,12 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
+        /// As Per rule https://rules.ssw.com.au/avoid-using-specific-characters-in-friendly-url
         public static string ToFileName(this string name)
         {
             string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
             var newName= new string(
-                name.Replace(' ', '-').Replace('/', '-')
+                name.Replace(' ', '-').Replace('/', '-').Replace('.', '-').Replace('=', '-')
                     .ToLower()
                     .ToCharArray()
                     .Where(c => permittedCharacters.Contains(c))
@@ -720,18 +731,18 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             var gatsbyUri = name.ToFileName();
 
             //Add SharePoint Beta-Link redirect
-            string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
-            var newName = new string(
-                name.Replace(' ', '-')
-                    .ToLower()
-                    .ToCharArray()
-                    .Where(c => permittedCharacters.Contains(c))
-                    .ToArray());
+            //string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
+            //var newName = new string(
+            //    name.Replace(' ', '-')
+            //        .ToLower()
+            //        .ToCharArray()
+            //        .Where(c => permittedCharacters.Contains(c))
+            //        .ToArray());
 
-            if(newName != gatsbyUri)
-            {
-                rule.Redirects.Add(newName);
-            }
+            //if(newName != gatsbyUri)
+            //{
+            //    rule.Redirects.Add(newName);
+            //}
 
             //Add SharePoint Link Redirect
             var spNewName = name.ToSharePointUri();

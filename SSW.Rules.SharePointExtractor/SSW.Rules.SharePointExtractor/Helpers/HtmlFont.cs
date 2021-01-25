@@ -22,6 +22,10 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             result = HtmlHelper.ReplaceHtmlWithFencedBlock(result, "font", "ms-rteCustom-FigureGood", "good");
             result = HtmlHelper.ReplaceHtmlWithFencedBlock(result, "font", "ms-rteCustom-FigureBad", "bad");
             result = HtmlHelper.ReplaceHtmlWithFencedBlock(result, "font", "ms-rteCustom-YellowBorderBox", "yellowBox");
+            result = HtmlHelper.ReplaceHtmlWithCodeBlock(result, "p", "ms-rteCustom-CodeArea", "");
+            result = HtmlHelper.ReplaceHtmlWithCodeBlock(result, "p", "ssw15-rteElement-CodeArea", "");
+            result = HtmlHelper.ReplaceHtmlWithCodeBlock(result, "p", "ms-rteCustom-CodeArea", "");
+            result = HtmlHelper.ReplaceHtmlWithCodeBlock(result, "font", "ms-rteCustom-CodeArea", "");
 
             result = HtmlHelper.ReplaceHtmlWithFullTagAndAttribute(result, "font", "style", "background-color&#58;#ffff00;", "mark");
 
@@ -46,8 +50,6 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             result = result.Replace("<font class=\"ms-rteCustom-FigureGood\">", "");
             result = result.Replace("<font class=\"ms-rteCustom-FigureGood\" >", "");
             result = result.Replace("<font class=\"ms-rteCustom-FigureBad\">", "");
-            result = result.Replace("<font class=\"ms-rteCustom-CodeArea\">", "");
-            result = result.Replace("<p class=\"ms-rteCustom-CodeArea\">", "");
 
             result = result.Replace("<font size=\"2\">", "");
             result = result.Replace("<font face=\"Verdana, sans-serif\">", "");
