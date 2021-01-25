@@ -327,6 +327,8 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
 
         private void WriteRule(RulePage rule)
         {
+            var tempRule = rule.ToFrontMatter(); //Hack to make sure the redirect Urls are populated
+
             var rulePaths = new RulePaths(_config, rule);
 
             if (!Directory.Exists(rulePaths.RuleFolderFull)) Directory.CreateDirectory(rulePaths.RuleFolderFull);
@@ -667,7 +669,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             _rule = rule;
         }
 
-        public string RuleFolderRelative => Path.Combine(_config.RulesFolder, _rule.Name.ToFileName());
+        public string RuleFolderRelative => Path.Combine(_config.RulesFolder, _rule.GetRuleUri());
         public string RuleFileRelative => Path.Combine(RuleFolderRelative, "rule.md");
         public string RuleFolderFull => Path.Combine(_config.TargetRepository, RuleFolderRelative);
         public string RuleFileFull => Path.Combine(_config.TargetRepository, RuleFileRelative);
@@ -706,6 +708,18 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
 
     public static class RuleExtensions
     {
+        public static string GetRuleUri(this RulePage rule)
+        {
+            //Check for any friendly urls
+            if (rule.Redirects.Count > 0)
+            {
+                return rule.Redirects[0];
+            }
+            else
+            {
+                return rule.Name.ToFileName();
+            }
+        }
         /// <summary>
         /// clean up a string to use as a file name. 
         /// </summary>
@@ -728,7 +742,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         //This is for preserving the SharePoint Beta Link Redirects
         public static string CreateUriAndRedirect(this string name, RulePage rule)
         {
-            var gatsbyUri = name.ToFileName();
+            var gatsbyUri = rule.GetRuleUri();
 
             //Add SharePoint Beta-Link redirect
             //string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
