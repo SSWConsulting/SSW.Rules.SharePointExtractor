@@ -200,6 +200,23 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             // process rules
             foreach (var rule in data.Rules)
             {
+                //Check for Related Rules
+                if (rule.Related.Count > 0)
+                {
+                    var tempRelated = rule.Related;
+                    foreach(var relatedRule in tempRelated)
+                    {
+                        //Check to make sure it's the correct URI
+                        var ruleUri = data.Rules.Where(r => r.Redirects.Contains(relatedRule)).ToList();
+                        if(ruleUri.Count > 0)
+                        {
+                            //Update the Uri in the Related rules list
+                            rule.Related = rule.Related.Select(s => s.Replace(relatedRule, ruleUri[0].GetRuleUri())).ToList();
+                        }
+                    }
+                    var relatedRules = rule.Related;
+                }
+
                 if (!String.IsNullOrEmpty(rule.IntroText))
                 {
                     rule.IntroText = Helpers.EncodedHtmlTags.Decode(rule.IntroText);
@@ -743,20 +760,6 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         public static string CreateUriAndRedirect(this string name, RulePage rule)
         {
             var gatsbyUri = rule.GetRuleUri();
-
-            //Add SharePoint Beta-Link redirect
-            //string permittedCharacters = "abcdefghijklmnopqrstuvwxyz1234567890-_";
-            //var newName = new string(
-            //    name.Replace(' ', '-')
-            //        .ToLower()
-            //        .ToCharArray()
-            //        .Where(c => permittedCharacters.Contains(c))
-            //        .ToArray());
-
-            //if(newName != gatsbyUri)
-            //{
-            //    rule.Redirects.Add(newName);
-            //}
 
             //Add SharePoint Link Redirect
             var spNewName = name.ToSharePointUri();
