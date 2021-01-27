@@ -19,7 +19,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter.FrontMatterModels
             Authors = rule.Employees.Select(e => new AuthorMdModel(e)).ToList();
             ArchivedReason = rule.ArchivedReason;
             Related = rule.Related.ToList();
-            Redirects = rule.Redirects.Distinct().Where(r => !r.Equals(Uri)).ToList();
+            Redirects = rule.Redirects.Distinct().Where(r => !r.ToLower().Equals(Uri)).ToList();
         }
 
         public string Type => "rule";

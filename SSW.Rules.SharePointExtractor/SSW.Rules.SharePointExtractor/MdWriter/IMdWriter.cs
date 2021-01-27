@@ -730,7 +730,7 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
             //Check for any friendly urls
             if (rule.Redirects.Count > 0)
             {
-                return rule.Redirects[0];
+                return rule.Redirects[0].ToFileName();
             }
             else
             {
