@@ -310,7 +310,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
                                             }
                                             else
                                             {
-                                                figureType = "ok";
+                                                figureType = "";
                                             }
                                         }
 
