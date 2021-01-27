@@ -328,8 +328,6 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                 FileName = item["FileLeafRef"].ToString()
             };
 
-            
-
             RulePageAuthors(item, dataSet, rulePage);
             RulePageRelated(item, dataSet, rulePage);
 
@@ -507,8 +505,7 @@ namespace SSW.Rules.SharePointExtractor.SpImporter
                         if (keywordsArray.Contains(keyWord))
                         {
                             var relatedRuleTitle = node.Parent.Descendants(xmlns + "Title").FirstOrDefault();
-                            var relatedRuleUri = relatedRuleTitle.Value.ToLowerInvariant().Replace(' ', '-');
-                            relatedRuleUri = Regex.Replace(relatedRuleUri, "[?().:]", "");
+                            var relatedRuleUri = relatedRuleTitle.Value.ToFileName();
                             rulePage.Related.Add(relatedRuleUri);
                         }
                     }
