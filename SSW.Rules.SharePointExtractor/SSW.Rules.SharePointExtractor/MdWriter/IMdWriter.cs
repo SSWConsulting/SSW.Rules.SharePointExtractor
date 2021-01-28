@@ -761,6 +761,13 @@ namespace SSW.Rules.SharePointExtractor.MdWriter
         {
             var gatsbyUri = rule.GetRuleUri();
 
+            //Add SharePoint Beta-Link redirect
+            var spBetaLink = rule.Name.ToFileName();
+            if (spBetaLink != gatsbyUri)
+            {
+                rule.Redirects.Add(spBetaLink);
+            }
+
             //Add SharePoint Link Redirect
             var spNewName = name.ToSharePointUri();
             if(spNewName != gatsbyUri)
