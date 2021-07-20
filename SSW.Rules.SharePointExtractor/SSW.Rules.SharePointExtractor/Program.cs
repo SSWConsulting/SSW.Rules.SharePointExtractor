@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SharePoint.Client;
 using Microsoft.SharePoint.Client.Social;
 using Newtonsoft.Json;
+using Serilog;
 using SSW.Rules.SharePointExtractor.MdWriter;
 using SSW.Rules.SharePointExtractor.Models;
 using SSW.Rules.SharePointExtractor.SpImporter;
@@ -91,7 +92,7 @@ namespace SSW.Rules.SharePointExtractor
                     // write to markdown
                     var mdWriter = scope.ServiceProvider.GetService<IMdWriter>();
                     mdWriter.WriteMarkdown(data);
-
+                    
                 }
             }
             catch (Exception ex)
@@ -131,7 +132,14 @@ namespace SSW.Rules.SharePointExtractor
         {
             var services = new ServiceCollection();
             var appSettings = ApplicationSettings.LoadConfig();
-            services.AddLogging(b => b.AddConsole());
+
+            Log.Logger = new LoggerConfiguration()
+              .Enrich.FromLogContext()
+              .WriteTo.Console().WriteTo.File("ExtractionLogs.txt")
+              .CreateLogger();
+
+            services.AddLogging(loggingBuilder =>
+            loggingBuilder.AddSerilog(dispose: true));
 
             services.AddSingleton<ApplicationSettings>(appSettings);
 
