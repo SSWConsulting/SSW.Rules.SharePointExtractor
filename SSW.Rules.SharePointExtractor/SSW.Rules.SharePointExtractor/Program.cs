@@ -92,7 +92,6 @@ namespace SSW.Rules.SharePointExtractor
                     // write to markdown
                     var mdWriter = scope.ServiceProvider.GetService<IMdWriter>();
                     mdWriter.WriteMarkdown(data);
-                    
                 }
             }
             catch (Exception ex)

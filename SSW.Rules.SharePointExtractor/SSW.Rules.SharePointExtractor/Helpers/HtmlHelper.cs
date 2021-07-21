@@ -426,21 +426,12 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             if (htmlNodes == null)
                 return filterNode;
 
-            //remove if parent <pre>
-            // remove if outerhtml is empty
             foreach (var node in htmlNodes)
             {
                 if (string.IsNullOrEmpty(node.InnerHtml))
                 {
                     filterNode.Add(node);
                 }
-                //Log.Information("NODE: " + node);
-                //if (string.IsNullOrEmpty(node.OuterHtml))
-                //    continue;
-                //Log.Information(node.OuterHtml);
-                //if (node.XPath.Contains("/pre"))
-                //    continue;
-                //filterNode.Add(node);
             }
             return filterNode;
         }
@@ -457,10 +448,8 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             var filterNode = new List<HtmlNode>();
             foreach(var node in htmlNodes)
             {
-                Log.Information("NODE: " + node);
                 if (string.IsNullOrEmpty(node.OuterHtml))
                     continue;
-                Log.Information(node.OuterHtml);
                 if(node.XPath.Contains("/pre"))
                     continue;
                 filterNode.Add(node);
@@ -496,7 +485,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             return result;
         }
 
-        private static HtmlNodeCollection FindClassNameNodes(string classname, HtmlNodeCollection nodes) //This gets rid of some stuff maybe
+        private static HtmlNodeCollection FindClassNameNodes(string classname, HtmlNodeCollection nodes)
         {
             var doc = new HtmlDocument();
             var result = new HtmlNodeCollection(doc.DocumentNode);
