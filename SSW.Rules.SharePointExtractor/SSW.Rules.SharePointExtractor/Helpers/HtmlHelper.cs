@@ -3,11 +3,32 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using Serilog;
 
 namespace SSW.Rules.SharePointExtractor.Helpers
 {
     public class HtmlHelper
     {
+        public static void FindWebParts(string content)
+        {
+            var nodesFound = GetNodesWithTagAndClassName(content, "div", "ms-rte-wpbox");
+
+            if (nodesFound.Count() > 0)
+            {
+                Log.Warning("Web parts found! These cannot be migrated and will be removed");
+            }
+
+            var doc = new HtmlDocument();
+            doc.LoadHtml(content);
+
+            var emptyNodesFound = GetEmptyNodesWithTag(doc, "div");
+
+            if (emptyNodesFound.Count > 0)
+            {
+                Log.Warning("Empty div tag found. This might be a Web Part. Web Part cannot be migrated and will be removed");
+            }
+        }
+
         public static HashSet<string> GetImageUrls(string content)
         {
             var result = new HashSet<string>();
@@ -397,6 +418,24 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             return result;
         }
 
+        public static List<HtmlNode> GetEmptyNodesWithTag(HtmlDocument doc, string htmlTag)
+        {
+            var htmlNodes = doc.DocumentNode.SelectNodes("//" + htmlTag);
+            var filterNode = new List<HtmlNode>();
+
+            if (htmlNodes == null)
+                return filterNode;
+
+            foreach (var node in htmlNodes)
+            {
+                if (string.IsNullOrEmpty(node.InnerHtml))
+                {
+                    filterNode.Add(node);
+                }
+            }
+            return filterNode;
+        }
+
         public static List<HtmlNode> GetNodesWithTag(HtmlDocument doc, string htmlTag)
         {
             var htmlNodes = doc.DocumentNode.SelectNodes("//" + htmlTag);
@@ -410,7 +449,7 @@ namespace SSW.Rules.SharePointExtractor.Helpers
             foreach(var node in htmlNodes)
             {
                 if (string.IsNullOrEmpty(node.OuterHtml))
-                    continue; 
+                    continue;
                 if(node.XPath.Contains("/pre"))
                     continue;
                 filterNode.Add(node);

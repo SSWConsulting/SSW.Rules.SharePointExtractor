@@ -1,5 +1,6 @@
 ﻿using SSW.Rules.SharePointExtractor.Helpers;
 using System;
+using Serilog;
 using System.Text.RegularExpressions;
 
 namespace SSW.Rules.SharePointExtractor.Converter
@@ -8,6 +9,11 @@ namespace SSW.Rules.SharePointExtractor.Converter
     {
         public static string Process(string html)
         {
+            // Check for web parts - these cannot be migrated
+            HtmlHelper.FindWebParts(html);
+
+            // TODO: Check for references of /Documents folder - these files are not migrated
+
             //Replace space characters
             string result = html.Replace("\u200B", "").Replace("&nbsp;", " ");
             result = result.Replace("size=\"+0\"","");
